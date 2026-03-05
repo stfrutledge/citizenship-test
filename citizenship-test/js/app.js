@@ -1,0 +1,930 @@
+/**
+ * Main Application Controller
+ *
+ * Handles all application logic, state management, and coordinates
+ * between UI and data layers.
+ */
+
+const App = {
+  // Application state
+  state: {
+    currentScreen: 'home',
+    answerMode: 'multiple', // 'multiple', 'typed', or 'both'
+    weakThreshold: 70,
+    darkMode: false,
+
+    // Study mode state
+    studyQuestions: [],
+    currentQuestionIndex: 0,
+    studyFilter: 'all',
+
+    // Exam mode state
+    examQuestions: [],
+    examCurrentIndex: 0,
+    examAnswers: [],
+    examScore: 0,
+    examInProgress: false,
+
+    // Weak areas state
+    weakQuestions: [],
+    weakCurrentIndex: 0,
+
+    // Data cache
+    questionStats: [],
+    examHistory: [],
+    settings: {}
+  },
+
+  /**
+   * Initialize the application
+   */
+  async init() {
+    console.log('Initializing Citizenship Test App...');
+
+    // Load data
+    await this.loadData();
+
+    // Apply settings
+    this.applySettings();
+
+    // Update home stats
+    this.updateHomeStats();
+
+    // Set up event listeners
+    this.setupEventListeners();
+
+    console.log('App initialized');
+  },
+
+  /**
+   * Load all data from storage
+   */
+  async loadData() {
+    UI.showLoading('Loading your progress...');
+
+    try {
+      const result = await SheetsAPI.getAllData(true);
+
+      if (result.success) {
+        this.state.questionStats = result.data.questionStats || [];
+        this.state.examHistory = result.data.examHistory || [];
+        this.state.settings = result.data.settings || {};
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+    }
+
+    UI.hideLoading();
+  },
+
+  /**
+   * Apply saved settings
+   */
+  applySettings() {
+    const settings = this.state.settings;
+
+    // Answer mode
+    if (settings.answerMode) {
+      this.state.answerMode = settings.answerMode;
+    }
+
+    // Weak threshold
+    if (settings.weakThreshold) {
+      this.state.weakThreshold = parseInt(settings.weakThreshold);
+    }
+
+    // Dark mode
+    if (settings.darkMode === 'true' || settings.darkMode === true) {
+      this.state.darkMode = true;
+      UI.toggleDarkMode(true);
+    }
+
+    // Update settings UI if on settings screen
+    UI.updateSettingsUI({
+      answerMode: this.state.answerMode,
+      weakThreshold: this.state.weakThreshold,
+      darkMode: this.state.darkMode
+    });
+  },
+
+  /**
+   * Set up event listeners
+   */
+  setupEventListeners() {
+    // Enter key for typed answers
+    document.getElementById('typed-answer-input')?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        this.checkTypedAnswer();
+      }
+    });
+
+    document.getElementById('exam-typed-input')?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        this.submitExamAnswer();
+      }
+    });
+
+    document.getElementById('weak-typed-input')?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        this.checkWeakAnswer();
+      }
+    });
+
+    // Close modal on click outside
+    document.getElementById('confirm-modal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'confirm-modal') {
+        UI.closeModal();
+      }
+    });
+  },
+
+  /**
+   * Update home screen statistics
+   */
+  updateHomeStats() {
+    const stats = SheetsAPI.getOverallStats();
+    UI.updateHomeStats(stats);
+  },
+
+  /**
+   * Show a screen
+   */
+  showScreen(screenId) {
+    this.state.currentScreen = screenId;
+    UI.showScreen(screenId);
+
+    // Screen-specific initialization
+    if (screenId === 'stats') {
+      this.loadStatsScreen();
+    } else if (screenId === 'settings') {
+      UI.updateSettingsUI({
+        answerMode: this.state.answerMode,
+        weakThreshold: this.state.weakThreshold,
+        darkMode: this.state.darkMode
+      });
+    }
+  },
+
+  // ==================
+  // Study Mode
+  // ==================
+
+  /**
+   * Start study mode
+   */
+  startStudyMode(filter = 'all') {
+    this.state.studyFilter = filter;
+
+    let questions = [...QUESTIONS];
+
+    // Apply filter
+    if (filter === '65_20') {
+      questions = QUESTIONS_65_20;
+    }
+
+    this.state.studyQuestions = questions;
+    UI.renderQuestionsList(questions, this.state.questionStats);
+    UI.showQuestionsList();
+    this.showScreen('study');
+    UI.updateAnswerModeToggle(this.state.answerMode);
+  },
+
+  /**
+   * Filter questions in study mode
+   */
+  filterQuestions() {
+    const categoryFilter = document.getElementById('category-filter')?.value || 'all';
+    const statusFilter = document.getElementById('status-filter')?.value || 'all';
+
+    let questions = [...QUESTIONS];
+
+    // Category filter
+    if (categoryFilter !== 'all') {
+      questions = questions.filter(q => q.category === categoryFilter);
+    }
+
+    // Status filter
+    if (statusFilter !== 'all') {
+      const stats = this.state.questionStats;
+
+      questions = questions.filter(q => {
+        const stat = stats.find(s => s.questionId === q.id);
+
+        switch (statusFilter) {
+          case 'not-practiced':
+            return !stat || stat.timesAsked === 0;
+          case 'weak':
+            return stat && stat.timesAsked > 0 && stat.successRate < this.state.weakThreshold;
+          case 'strong':
+            return stat && stat.timesAsked > 0 && stat.successRate >= this.state.weakThreshold;
+          default:
+            return true;
+        }
+      });
+    }
+
+    this.state.studyQuestions = questions;
+    UI.renderQuestionsList(questions, this.state.questionStats);
+  },
+
+  /**
+   * Set answer mode
+   */
+  setAnswerMode(mode) {
+    this.state.answerMode = mode;
+    UI.updateAnswerModeToggle(mode);
+  },
+
+  /**
+   * Select a question to practice
+   */
+  selectQuestion(questionId) {
+    const index = this.state.studyQuestions.findIndex(q => q.id === questionId);
+    if (index === -1) return;
+
+    this.state.currentQuestionIndex = index;
+    const question = this.state.studyQuestions[index];
+    UI.renderQuestion(question, this.state.answerMode);
+  },
+
+  /**
+   * Handle choice selection in study mode
+   */
+  selectChoice(button, choiceIndex, isCorrect) {
+    const question = this.state.studyQuestions[this.state.currentQuestionIndex];
+
+    // Record answer
+    SheetsAPI.recordAnswer(question.id, isCorrect);
+
+    // Update UI
+    UI.updateChoiceStates(button, isCorrect, 'choices-container');
+    UI.showFeedback(isCorrect, question.answers);
+
+    // Update local stats
+    const statIndex = this.state.questionStats.findIndex(s => s.questionId === question.id);
+    if (statIndex >= 0) {
+      this.state.questionStats[statIndex].timesAsked++;
+      if (isCorrect) {
+        this.state.questionStats[statIndex].timesCorrect++;
+      }
+      this.state.questionStats[statIndex].successRate =
+        (this.state.questionStats[statIndex].timesCorrect /
+         this.state.questionStats[statIndex].timesAsked) * 100;
+    }
+  },
+
+  /**
+   * Check typed answer
+   */
+  checkTypedAnswer() {
+    const input = document.getElementById('typed-answer-input');
+    const userAnswer = input?.value.trim();
+
+    if (!userAnswer) return;
+
+    const question = this.state.studyQuestions[this.state.currentQuestionIndex];
+    const isCorrect = this.validateAnswer(userAnswer, question.answers);
+
+    // Record answer
+    SheetsAPI.recordAnswer(question.id, isCorrect);
+
+    // Show feedback
+    UI.showFeedback(isCorrect, question.answers);
+
+    // Disable input
+    if (input) input.disabled = true;
+
+    // Update local stats
+    const statIndex = this.state.questionStats.findIndex(s => s.questionId === question.id);
+    if (statIndex >= 0) {
+      this.state.questionStats[statIndex].timesAsked++;
+      if (isCorrect) {
+        this.state.questionStats[statIndex].timesCorrect++;
+      }
+      this.state.questionStats[statIndex].successRate =
+        (this.state.questionStats[statIndex].timesCorrect /
+         this.state.questionStats[statIndex].timesAsked) * 100;
+    }
+  },
+
+  /**
+   * Validate a typed answer against acceptable answers
+   */
+  validateAnswer(userAnswer, acceptableAnswers, questionId = null) {
+    const normalizedUser = this.normalizeAnswer(userAnswer);
+
+    // First try exact/fuzzy string matching
+    for (const answer of acceptableAnswers) {
+      const normalizedAcceptable = this.normalizeAnswer(answer);
+
+      // Exact match
+      if (normalizedUser === normalizedAcceptable) {
+        return true;
+      }
+
+      // Contains match (for partial answers)
+      if (normalizedAcceptable.includes(normalizedUser) && normalizedUser.length > 3) {
+        return true;
+      }
+
+      // User answer contains acceptable answer
+      if (normalizedUser.includes(normalizedAcceptable)) {
+        return true;
+      }
+
+      // Fuzzy match - allow for minor typos
+      if (this.fuzzyMatch(normalizedUser, normalizedAcceptable, 2)) {
+        return true;
+      }
+    }
+
+    // Try keyword-based validation (more flexible)
+    if (this.validateByKeywords(normalizedUser, acceptableAnswers)) {
+      return true;
+    }
+
+    return false;
+  },
+
+  /**
+   * Validate answer using keyword/concept matching
+   * Extracts key concepts from acceptable answers and checks if user's answer contains them
+   */
+  validateByKeywords(userAnswer, acceptableAnswers) {
+    // Define synonym groups for common concepts
+    const synonymGroups = {
+      // Numbers
+      'fifty': ['50', 'fifty'],
+      'thirteen': ['13', 'thirteen'],
+      'twentyseven': ['27', 'twenty-seven', 'twentyseven', 'twenty seven'],
+      'hundred': ['100', 'hundred'],
+      'four': ['4', 'four'],
+      'six': ['6', 'six'],
+      'two': ['2', 'two'],
+      'nine': ['9', 'nine'],
+      'eighteen': ['18', 'eighteen'],
+      'ten': ['10', 'ten'],
+      // Government concepts
+      'constitution': ['constitution', 'constitutional'],
+      'president': ['president', 'presidential'],
+      'congress': ['congress', 'congressional'],
+      'senator': ['senator', 'senators', 'senate'],
+      'representative': ['representative', 'representatives', 'rep'],
+      'supreme court': ['supreme court', 'highest court'],
+      'judicial': ['judicial', 'courts', 'judges'],
+      'executive': ['executive', 'president'],
+      'legislative': ['legislative', 'congress', 'legislature'],
+      // Actions/concepts
+      'represent': ['represent', 'represents', 'representing', 'representation', 'stands for', 'symbolize', 'symbolizes'],
+      'protect': ['protect', 'protects', 'protecting', 'protection', 'defend', 'defends'],
+      'freedom': ['freedom', 'free', 'liberty', 'right', 'rights'],
+      'vote': ['vote', 'voting', 'elect', 'election'],
+      'law': ['law', 'laws', 'legal', 'legislation'],
+      'state': ['state', 'states'],
+      'colony': ['colony', 'colonies', 'colonial'],
+      'amendment': ['amendment', 'amendments', 'change', 'addition'],
+      'independence': ['independence', 'independent', 'free', 'freedom'],
+      'citizen': ['citizen', 'citizens', 'citizenship'],
+      'war': ['war', 'wars', 'fought', 'battle'],
+      'rights': ['rights', 'right', 'freedom', 'freedoms', 'liberty'],
+      // People
+      'washington': ['washington', 'george washington'],
+      'jefferson': ['jefferson', 'thomas jefferson'],
+      'lincoln': ['lincoln', 'abraham lincoln'],
+      'franklin': ['franklin', 'benjamin franklin', 'ben franklin'],
+      // Places
+      'britain': ['britain', 'british', 'england', 'english', 'great britain'],
+      'america': ['america', 'american', 'united states', 'us', 'usa'],
+    };
+
+    // Extract key words from acceptable answers
+    const keywordsFromAnswers = new Set();
+    for (const answer of acceptableAnswers) {
+      const words = this.normalizeAnswer(answer).split(' ');
+      words.forEach(word => {
+        if (word.length > 2) {
+          keywordsFromAnswers.add(word);
+        }
+      });
+    }
+
+    // Check how many key concepts the user's answer matches
+    let matchedConcepts = 0;
+    let totalConcepts = 0;
+
+    for (const keyword of keywordsFromAnswers) {
+      // Skip common filler words
+      if (['the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+           'have', 'has', 'had', 'do', 'does', 'did', 'for', 'and', 'but', 'or',
+           'because', 'that', 'this', 'there', 'their', 'they', 'them', 'can',
+           'will', 'would', 'could', 'should', 'one', 'each', 'every'].includes(keyword)) {
+        continue;
+      }
+
+      totalConcepts++;
+
+      // Check if user's answer contains this keyword or a synonym
+      if (userAnswer.includes(keyword)) {
+        matchedConcepts++;
+        continue;
+      }
+
+      // Check synonyms
+      for (const [concept, synonyms] of Object.entries(synonymGroups)) {
+        if (synonyms.includes(keyword)) {
+          // Check if user used any synonym for this concept
+          for (const syn of synonyms) {
+            if (userAnswer.includes(syn)) {
+              matchedConcepts++;
+              break;
+            }
+          }
+          break;
+        }
+      }
+    }
+
+    // Accept if user matched most key concepts (at least 60% or 2+ concepts)
+    if (totalConcepts > 0) {
+      const matchRatio = matchedConcepts / totalConcepts;
+      if (matchRatio >= 0.6 || (matchedConcepts >= 2 && totalConcepts <= 4)) {
+        return true;
+      }
+    }
+
+    return false;
+  },
+
+  /**
+   * Normalize an answer for comparison
+   */
+  normalizeAnswer(answer) {
+    return answer
+      .toLowerCase()
+      .replace(/^the\s+/i, '')
+      .replace(/[^a-z0-9\s]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  },
+
+  /**
+   * Simple fuzzy matching (Levenshtein distance)
+   */
+  fuzzyMatch(str1, str2, maxDistance) {
+    if (Math.abs(str1.length - str2.length) > maxDistance) return false;
+
+    const matrix = [];
+
+    for (let i = 0; i <= str1.length; i++) {
+      matrix[i] = [i];
+    }
+
+    for (let j = 0; j <= str2.length; j++) {
+      matrix[0][j] = j;
+    }
+
+    for (let i = 1; i <= str1.length; i++) {
+      for (let j = 1; j <= str2.length; j++) {
+        if (str1[i - 1] === str2[j - 1]) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1,
+            matrix[i][j - 1] + 1,
+            matrix[i - 1][j] + 1
+          );
+        }
+      }
+    }
+
+    return matrix[str1.length][str2.length] <= maxDistance;
+  },
+
+  /**
+   * Show correct answer
+   */
+  showAnswer() {
+    const question = this.state.studyQuestions[this.state.currentQuestionIndex];
+    UI.showFeedback(true, question.answers);
+  },
+
+  /**
+   * Navigate to previous question
+   */
+  previousQuestion() {
+    if (this.state.currentQuestionIndex > 0) {
+      this.state.currentQuestionIndex--;
+      const question = this.state.studyQuestions[this.state.currentQuestionIndex];
+      UI.renderQuestion(question, this.state.answerMode);
+    }
+  },
+
+  /**
+   * Navigate to next question
+   */
+  nextQuestion() {
+    if (this.state.currentQuestionIndex < this.state.studyQuestions.length - 1) {
+      this.state.currentQuestionIndex++;
+      const question = this.state.studyQuestions[this.state.currentQuestionIndex];
+      UI.renderQuestion(question, this.state.answerMode);
+    } else {
+      // End of questions - go back to list
+      UI.renderQuestionsList(this.state.studyQuestions, this.state.questionStats);
+      UI.showQuestionsList();
+    }
+  },
+
+  // ==================
+  // Exam Mode
+  // ==================
+
+  /**
+   * Start exam mode
+   */
+  startExamMode() {
+    // Select 10 random questions
+    const shuffled = [...QUESTIONS].sort(() => Math.random() - 0.5);
+    this.state.examQuestions = shuffled.slice(0, 10);
+    this.state.examCurrentIndex = 0;
+    this.state.examAnswers = [];
+    this.state.examScore = 0;
+    this.state.examInProgress = true;
+
+    this.showScreen('exam');
+    this.renderCurrentExamQuestion();
+  },
+
+  /**
+   * Render current exam question
+   */
+  renderCurrentExamQuestion() {
+    const question = this.state.examQuestions[this.state.examCurrentIndex];
+    UI.renderExamQuestion(question, this.state.examCurrentIndex + 1, this.state.answerMode);
+  },
+
+  /**
+   * Handle exam choice selection
+   */
+  examSelectChoice(button, choiceIndex, isCorrect) {
+    const question = this.state.examQuestions[this.state.examCurrentIndex];
+
+    // Record answer
+    this.state.examAnswers.push({
+      questionId: question.id,
+      correct: isCorrect
+    });
+
+    if (isCorrect) {
+      this.state.examScore++;
+    }
+
+    // Record to stats
+    SheetsAPI.recordAnswer(question.id, isCorrect);
+
+    // Update UI
+    UI.updateChoiceStates(button, isCorrect, 'exam-choices-container');
+    UI.showExamFeedback(isCorrect);
+
+    // Move to next question after delay
+    setTimeout(() => this.nextExamQuestion(), 1500);
+  },
+
+  /**
+   * Submit exam typed answer
+   */
+  submitExamAnswer() {
+    const input = document.getElementById('exam-typed-input');
+    const userAnswer = input?.value.trim();
+
+    if (!userAnswer) return;
+
+    const question = this.state.examQuestions[this.state.examCurrentIndex];
+    const isCorrect = this.validateAnswer(userAnswer, question.answers);
+
+    // Record answer
+    this.state.examAnswers.push({
+      questionId: question.id,
+      correct: isCorrect
+    });
+
+    if (isCorrect) {
+      this.state.examScore++;
+    }
+
+    // Record to stats
+    SheetsAPI.recordAnswer(question.id, isCorrect);
+
+    // Show feedback
+    UI.showExamFeedback(isCorrect);
+
+    // Disable input
+    if (input) input.disabled = true;
+
+    // Move to next question after delay
+    setTimeout(() => this.nextExamQuestion(), 1500);
+  },
+
+  /**
+   * Move to next exam question
+   */
+  nextExamQuestion() {
+    this.state.examCurrentIndex++;
+
+    if (this.state.examCurrentIndex >= 10) {
+      // Exam complete
+      this.completeExam();
+    } else {
+      this.renderCurrentExamQuestion();
+    }
+  },
+
+  /**
+   * Complete the exam
+   */
+  completeExam() {
+    const passed = this.state.examScore >= 6;
+    const questionsAsked = this.state.examQuestions.map(q => q.id);
+    const questionsMissed = this.state.examAnswers
+      .filter(a => !a.correct)
+      .map(a => a.questionId);
+
+    // Record exam
+    SheetsAPI.recordExam(
+      this.state.examScore,
+      passed,
+      questionsAsked,
+      questionsMissed
+    );
+
+    // Get missed question details
+    const missedQuestions = questionsMissed.map(id =>
+      QUESTIONS.find(q => q.id === id)
+    );
+
+    // Show results
+    this.state.examInProgress = false;
+    UI.renderExamResults(this.state.examScore, passed, missedQuestions);
+    this.showScreen('exam-results');
+
+    // Update home stats
+    this.updateHomeStats();
+  },
+
+  /**
+   * Confirm exit exam
+   */
+  confirmExitExam() {
+    if (this.state.examInProgress) {
+      UI.showModal(
+        'Exit Exam?',
+        'Your progress will be lost. Are you sure you want to exit?',
+        () => {
+          this.state.examInProgress = false;
+          this.showScreen('home');
+        }
+      );
+    } else {
+      this.showScreen('home');
+    }
+  },
+
+  /**
+   * Review missed questions from exam
+   */
+  reviewMissedQuestions() {
+    const missedIds = this.state.examAnswers
+      .filter(a => !a.correct)
+      .map(a => a.questionId);
+
+    if (missedIds.length === 0) {
+      this.showScreen('home');
+      return;
+    }
+
+    this.state.studyQuestions = QUESTIONS.filter(q => missedIds.includes(q.id));
+    this.state.currentQuestionIndex = 0;
+
+    this.showScreen('study');
+    UI.renderQuestion(this.state.studyQuestions[0], this.state.answerMode);
+  },
+
+  // ==================
+  // Weak Areas Mode
+  // ==================
+
+  /**
+   * Start weak areas mode
+   */
+  startWeakAreasMode() {
+    const weakQuestions = SheetsAPI.getWeakQuestions(this.state.weakThreshold);
+    this.state.weakQuestions = weakQuestions;
+    this.state.weakCurrentIndex = 0;
+
+    UI.renderWeakAreasIntro(weakQuestions);
+    this.showScreen('weak');
+  },
+
+  /**
+   * Start practicing weak areas
+   */
+  startWeakAreasPractice() {
+    if (this.state.weakQuestions.length === 0) {
+      UI.showWeakComplete();
+      return;
+    }
+
+    this.state.weakCurrentIndex = 0;
+    this.renderCurrentWeakQuestion();
+  },
+
+  /**
+   * Render current weak area question
+   */
+  renderCurrentWeakQuestion() {
+    const weakInfo = this.state.weakQuestions[this.state.weakCurrentIndex];
+    const question = QUESTIONS.find(q => q.id === weakInfo.questionId);
+
+    if (!question) {
+      this.nextWeakQuestion();
+      return;
+    }
+
+    UI.renderWeakQuestion(question, weakInfo, this.state.answerMode);
+  },
+
+  /**
+   * Handle weak area choice selection
+   */
+  weakSelectChoice(button, choiceIndex, isCorrect) {
+    const weakInfo = this.state.weakQuestions[this.state.weakCurrentIndex];
+    const question = QUESTIONS.find(q => q.id === weakInfo.questionId);
+
+    // Record answer
+    SheetsAPI.recordAnswer(question.id, isCorrect);
+
+    // Update UI
+    UI.updateChoiceStates(button, isCorrect, 'weak-choices-container');
+    UI.showFeedback(isCorrect, question.answers, 'weak-feedback', 'weak-correct-answers');
+  },
+
+  /**
+   * Check weak area typed answer
+   */
+  checkWeakAnswer() {
+    const input = document.getElementById('weak-typed-input');
+    const userAnswer = input?.value.trim();
+
+    if (!userAnswer) return;
+
+    const weakInfo = this.state.weakQuestions[this.state.weakCurrentIndex];
+    const question = QUESTIONS.find(q => q.id === weakInfo.questionId);
+    const isCorrect = this.validateAnswer(userAnswer, question.answers);
+
+    // Record answer
+    SheetsAPI.recordAnswer(question.id, isCorrect);
+
+    // Show feedback
+    UI.showFeedback(isCorrect, question.answers, 'weak-feedback', 'weak-correct-answers');
+
+    // Disable input
+    if (input) input.disabled = true;
+  },
+
+  /**
+   * Move to next weak question
+   */
+  nextWeakQuestion() {
+    this.state.weakCurrentIndex++;
+
+    if (this.state.weakCurrentIndex >= this.state.weakQuestions.length) {
+      UI.showWeakComplete();
+    } else {
+      this.renderCurrentWeakQuestion();
+    }
+  },
+
+  // ==================
+  // Statistics
+  // ==================
+
+  /**
+   * Load statistics screen
+   */
+  loadStatsScreen() {
+    const overallStats = SheetsAPI.getOverallStats();
+    const categoryStats = SheetsAPI.getCategoryStats();
+    const examHistory = this.state.examHistory || [];
+    const mostMissed = SheetsAPI.getMostMissedQuestions();
+
+    UI.renderStats(overallStats, categoryStats, examHistory, mostMissed);
+  },
+
+  // ==================
+  // Settings
+  // ==================
+
+  /**
+   * Update a setting
+   */
+  updateSetting(key, value) {
+    this.state.settings[key] = value;
+
+    // Apply immediately
+    switch (key) {
+      case 'answerMode':
+        this.state.answerMode = value;
+        break;
+      case 'weakThreshold':
+        this.state.weakThreshold = parseInt(value);
+        break;
+      case 'sheetsUrl':
+        SheetsAPI.setDeploymentUrl(value);
+        break;
+    }
+
+    // Save to storage
+    SheetsAPI.updateSetting(key, value);
+  },
+
+  /**
+   * Toggle dark mode
+   */
+  toggleDarkMode() {
+    const checkbox = document.getElementById('dark-mode-toggle');
+    const enabled = checkbox?.checked || false;
+
+    this.state.darkMode = enabled;
+    UI.toggleDarkMode(enabled);
+    this.updateSetting('darkMode', enabled.toString());
+  },
+
+  /**
+   * Test Google Sheets connection
+   */
+  async testSheetsConnection() {
+    UI.showLoading('Testing connection...');
+
+    const result = await SheetsAPI.testConnection();
+
+    UI.hideLoading();
+    UI.showConnectionStatus(
+      result.success,
+      result.success ? 'Connected!' : `Error: ${result.error}`
+    );
+
+    if (result.success) {
+      // Initialize sheets if needed
+      await SheetsAPI.initializeSheets();
+    }
+  },
+
+  /**
+   * Confirm reset statistics
+   */
+  confirmResetStats() {
+    UI.showModal(
+      'Reset Statistics?',
+      'This will permanently delete all your progress and statistics. This cannot be undone.',
+      async () => {
+        UI.showLoading('Resetting...');
+        await SheetsAPI.resetStats();
+        await this.loadData();
+        this.updateHomeStats();
+        UI.hideLoading();
+        this.showScreen('home');
+      }
+    );
+  },
+
+  /**
+   * Close modal (exposed for HTML onclick)
+   */
+  closeModal() {
+    UI.closeModal();
+  }
+};
+
+// Override selectChoice functions to use App methods
+window.App = App;
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  App.init();
+});
+
+// Handle exam choice selection (called from HTML)
+App.selectChoice = function(button, choiceIndex, isCorrect) {
+  const currentScreen = this.state.currentScreen;
+
+  if (currentScreen === 'exam') {
+    this.examSelectChoice(button, choiceIndex, isCorrect);
+  } else if (currentScreen === 'weak') {
+    this.weakSelectChoice(button, choiceIndex, isCorrect);
+  } else {
+    // Study mode
+    const question = this.state.studyQuestions[this.state.currentQuestionIndex];
+    SheetsAPI.recordAnswer(question.id, isCorrect);
+    UI.updateChoiceStates(button, isCorrect, 'choices-container');
+    UI.showFeedback(isCorrect, question.answers);
+  }
+};

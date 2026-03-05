@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>US Citizenship Test Practice</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-content">
+        <h1 class="logo" onclick="App.showScreen('home')">
+          <span class="flag-icon">🇺🇸</span>
+          <span>Citizenship Test</span>
+        </h1>
+        <nav class="nav">
+          <button class="nav-btn" onclick="App.showScreen('home')" data-screen="home">Home</button>
+          <button class="nav-btn" onclick="App.showScreen('stats')" data-screen="stats">Stats</button>
+          <button class="nav-btn" onclick="App.showScreen('settings')" data-screen="settings">Settings</button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- Home Screen -->
+      <section id="screen-home" class="screen active">
+        <div class="hero">
+          <h2>Prepare for Your Naturalization Test</h2>
+          <p>Practice all 100 civics questions from the official USCIS test</p>
+        </div>
+
+        <div class="quick-stats">
+          <div class="stat-card">
+            <span class="stat-value" id="home-total-practiced">0</span>
+            <span class="stat-label">Questions Practiced</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" id="home-accuracy">0%</span>
+            <span class="stat-label">Overall Accuracy</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" id="home-exams-passed">0</span>
+            <span class="stat-label">Exams Passed</span>
+          </div>
+        </div>
+
+        <div class="mode-selection">
+          <h3>Choose a Study Mode</h3>
+          <div class="mode-cards">
+            <div class="mode-card" onclick="App.startStudyMode()">
+              <div class="mode-icon">📚</div>
+              <h4>Study All Questions</h4>
+              <p>Browse and practice all 100 civics questions by category</p>
+            </div>
+            <div class="mode-card" onclick="App.startExamMode()">
+              <div class="mode-icon">📝</div>
+              <h4>Sample Exam</h4>
+              <p>Take a 10-question practice test (6/10 to pass)</p>
+            </div>
+            <div class="mode-card" onclick="App.startWeakAreasMode()">
+              <div class="mode-icon">🎯</div>
+              <h4>Weak Areas</h4>
+              <p>Focus on questions you've struggled with</p>
+            </div>
+            <div class="mode-card" onclick="App.startStudyMode('65_20')">
+              <div class="mode-icon">⭐</div>
+              <h4>65/20 Questions</h4>
+              <p>Study the 20 questions for 65+ applicants</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="location-info">
+          <p><strong>Your Location:</strong> New Jersey (ZIP 07946, Congressional District 7)</p>
+          <p class="small">State-specific answers are customized for your location</p>
+        </div>
+      </section>
+
+      <!-- Study Mode Screen -->
+      <section id="screen-study" class="screen">
+        <div class="study-header">
+          <button class="back-btn" onclick="App.showScreen('home')">← Back</button>
+          <h2>Study Mode</h2>
+          <div class="study-controls">
+            <select id="category-filter" onchange="App.filterQuestions()">
+              <option value="all">All Categories</option>
+              <option value="American Government">American Government</option>
+              <option value="American History">American History</option>
+              <option value="Integrated Civics">Integrated Civics</option>
+            </select>
+            <select id="status-filter" onchange="App.filterQuestions()">
+              <option value="all">All Questions</option>
+              <option value="not-practiced">Not Yet Practiced</option>
+              <option value="weak">Weak Areas (&lt;70%)</option>
+              <option value="strong">Strong (&gt;70%)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="answer-mode-toggle">
+          <span>Answer Mode:</span>
+          <button class="toggle-btn active" data-mode="multiple" onclick="App.setAnswerMode('multiple')">Multiple Choice</button>
+          <button class="toggle-btn" data-mode="typed" onclick="App.setAnswerMode('typed')">Typed Answer</button>
+        </div>
+
+        <div class="questions-list" id="questions-list">
+          <!-- Questions will be populated here -->
+        </div>
+
+        <div class="question-practice" id="question-practice" style="display: none;">
+          <div class="question-card">
+            <div class="question-meta">
+              <span class="question-number">Question <span id="practice-q-num">1</span> of 100</span>
+              <span class="question-category" id="practice-q-category">Category</span>
+            </div>
+            <h3 class="question-text" id="practice-q-text">Question text here</h3>
+
+            <div id="multiple-choice-container" class="answer-container">
+              <div class="choices" id="choices-container">
+                <!-- Choices will be populated here -->
+              </div>
+            </div>
+
+            <div id="typed-answer-container" class="answer-container" style="display: none;">
+              <input type="text" id="typed-answer-input" class="typed-answer-input" placeholder="Type your answer...">
+              <button class="submit-btn" onclick="App.checkTypedAnswer()">Check Answer</button>
+            </div>
+
+            <div id="answer-feedback" class="feedback" style="display: none;">
+              <div class="feedback-icon"></div>
+              <div class="feedback-text"></div>
+              <div class="correct-answers" id="correct-answers"></div>
+            </div>
+
+            <div class="question-nav">
+              <button class="nav-prev" onclick="App.previousQuestion()">← Previous</button>
+              <button class="show-answer-btn" onclick="App.showAnswer()">Show Answer</button>
+              <button class="nav-next" onclick="App.nextQuestion()">Next →</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Exam Mode Screen -->
+      <section id="screen-exam" class="screen">
+        <div class="exam-header">
+          <button class="back-btn" onclick="App.confirmExitExam()">← Exit Exam</button>
+          <h2>Sample Exam</h2>
+          <div class="exam-progress">
+            <span>Question <span id="exam-current">1</span> of 10</span>
+            <div class="progress-bar">
+              <div class="progress-fill" id="exam-progress-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="exam-question" id="exam-question-container">
+          <div class="question-card exam-card">
+            <h3 class="question-text" id="exam-q-text">Question text here</h3>
+
+            <div id="exam-multiple-choice" class="answer-container">
+              <div class="choices" id="exam-choices-container">
+                <!-- Choices will be populated here -->
+              </div>
+            </div>
+
+            <div id="exam-typed-answer" class="answer-container" style="display: none;">
+              <input type="text" id="exam-typed-input" class="typed-answer-input" placeholder="Type your answer...">
+              <button class="submit-btn" onclick="App.submitExamAnswer()">Submit Answer</button>
+            </div>
+
+            <div id="exam-feedback" class="feedback" style="display: none;">
+              <div class="feedback-icon"></div>
+              <div class="feedback-text"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Exam Results Screen -->
+      <section id="screen-exam-results" class="screen">
+        <div class="results-container">
+          <div class="results-header" id="results-header">
+            <div class="result-icon">✓</div>
+            <h2>Congratulations!</h2>
+            <p class="result-subtitle">You passed the practice exam</p>
+          </div>
+
+          <div class="score-display">
+            <div class="score-circle">
+              <span class="score-value" id="exam-score">8</span>
+              <span class="score-total">/10</span>
+            </div>
+            <p class="score-label">Questions Correct</p>
+          </div>
+
+          <div class="missed-questions" id="missed-questions-container">
+            <h3>Questions to Review</h3>
+            <div class="missed-list" id="missed-questions-list">
+              <!-- Missed questions will be populated here -->
+            </div>
+          </div>
+
+          <div class="results-actions">
+            <button class="btn-primary" onclick="App.startExamMode()">Take Another Exam</button>
+            <button class="btn-secondary" onclick="App.reviewMissedQuestions()">Review Missed Questions</button>
+            <button class="btn-secondary" onclick="App.showScreen('home')">Back to Home</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Weak Areas Screen -->
+      <section id="screen-weak" class="screen">
+        <div class="weak-header">
+          <button class="back-btn" onclick="App.showScreen('home')">← Back</button>
+          <h2>Weak Areas Practice</h2>
+        </div>
+
+        <div class="weak-intro" id="weak-intro">
+          <p>These are questions you've struggled with or haven't practiced recently.</p>
+          <div class="weak-stats">
+            <span id="weak-count">0</span> questions to practice
+          </div>
+          <button class="btn-primary" onclick="App.startWeakAreasPractice()">Start Practice</button>
+        </div>
+
+        <div class="weak-practice" id="weak-practice" style="display: none;">
+          <div class="question-card">
+            <div class="question-meta">
+              <span class="question-number">Question <span id="weak-q-num">1</span></span>
+              <span class="weak-reason" id="weak-reason">Low accuracy</span>
+            </div>
+            <h3 class="question-text" id="weak-q-text">Question text here</h3>
+
+            <div id="weak-multiple-choice" class="answer-container">
+              <div class="choices" id="weak-choices-container">
+                <!-- Choices will be populated here -->
+              </div>
+            </div>
+
+            <div id="weak-typed-answer" class="answer-container" style="display: none;">
+              <input type="text" id="weak-typed-input" class="typed-answer-input" placeholder="Type your answer...">
+              <button class="submit-btn" onclick="App.checkWeakAnswer()">Check Answer</button>
+            </div>
+
+            <div id="weak-feedback" class="feedback" style="display: none;">
+              <div class="feedback-icon"></div>
+              <div class="feedback-text"></div>
+              <div class="correct-answers" id="weak-correct-answers"></div>
+            </div>
+
+            <div class="question-nav">
+              <button class="nav-next" onclick="App.nextWeakQuestion()">Next Question →</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="weak-complete" id="weak-complete" style="display: none;">
+          <div class="complete-icon">🎉</div>
+          <h3>Great Job!</h3>
+          <p>You've practiced all your weak areas.</p>
+          <button class="btn-primary" onclick="App.showScreen('home')">Back to Home</button>
+        </div>
+      </section>
+
+      <!-- Statistics Screen -->
+      <section id="screen-stats" class="screen">
+        <div class="stats-header">
+          <button class="back-btn" onclick="App.showScreen('home')">← Back</button>
+          <h2>Your Statistics</h2>
+        </div>
+
+        <div class="stats-overview">
+          <div class="stat-card large">
+            <span class="stat-value" id="stats-total-asked">0</span>
+            <span class="stat-label">Total Questions Answered</span>
+          </div>
+          <div class="stat-card large">
+            <span class="stat-value" id="stats-total-correct">0</span>
+            <span class="stat-label">Correct Answers</span>
+          </div>
+          <div class="stat-card large">
+            <span class="stat-value" id="stats-accuracy">0%</span>
+            <span class="stat-label">Overall Accuracy</span>
+          </div>
+        </div>
+
+        <div class="category-stats">
+          <h3>Performance by Category</h3>
+          <div class="category-bars" id="category-bars">
+            <!-- Category bars will be populated here -->
+          </div>
+        </div>
+
+        <div class="exam-history">
+          <h3>Exam History</h3>
+          <div class="exam-history-list" id="exam-history-list">
+            <!-- Exam history will be populated here -->
+          </div>
+        </div>
+
+        <div class="most-missed">
+          <h3>Most Missed Questions</h3>
+          <div class="missed-list" id="most-missed-list">
+            <!-- Most missed questions will be populated here -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Settings Screen -->
+      <section id="screen-settings" class="screen">
+        <div class="settings-header">
+          <button class="back-btn" onclick="App.showScreen('home')">← Back</button>
+          <h2>Settings</h2>
+        </div>
+
+        <div class="settings-section">
+          <h3>Answer Mode</h3>
+          <div class="setting-option">
+            <label>
+              <input type="radio" name="answer-mode" value="multiple" checked onchange="App.updateSetting('answerMode', 'multiple')">
+              Multiple Choice
+            </label>
+            <label>
+              <input type="radio" name="answer-mode" value="typed" onchange="App.updateSetting('answerMode', 'typed')">
+              Typed Answer
+            </label>
+            <label>
+              <input type="radio" name="answer-mode" value="both" onchange="App.updateSetting('answerMode', 'both')">
+              Both (Alternate)
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Weak Area Threshold</h3>
+          <div class="setting-option">
+            <label for="weak-threshold">Questions below this accuracy are considered weak:</label>
+            <select id="weak-threshold" onchange="App.updateSetting('weakThreshold', this.value)">
+              <option value="50">50%</option>
+              <option value="60">60%</option>
+              <option value="70" selected>70%</option>
+              <option value="80">80%</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Appearance</h3>
+          <div class="setting-option">
+            <label>
+              <input type="checkbox" id="dark-mode-toggle" onchange="App.toggleDarkMode()">
+              Dark Mode
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Google Sheets Integration</h3>
+          <div class="setting-option">
+            <label for="sheets-url">Apps Script Deployment URL:</label>
+            <input type="text" id="sheets-url" class="text-input" placeholder="https://script.google.com/macros/s/..." onchange="App.updateSetting('sheetsUrl', this.value)">
+            <button class="btn-small" onclick="App.testSheetsConnection()">Test Connection</button>
+            <span class="connection-status" id="sheets-status"></span>
+          </div>
+        </div>
+
+        <div class="settings-section danger">
+          <h3>Data Management</h3>
+          <div class="setting-option">
+            <button class="btn-danger" onclick="App.confirmResetStats()">Reset All Statistics</button>
+            <p class="setting-note">This will clear all your progress and statistics.</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>Based on USCIS M-1122 (rev. 07/2024)</p>
+      <p class="small">For study purposes only. This is not an official USCIS application.</p>
+    </footer>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+      <div class="spinner"></div>
+      <p>Loading...</p>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <h3 id="modal-title">Confirm</h3>
+        <p id="modal-message">Are you sure?</p>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="App.closeModal()">Cancel</button>
+          <button class="btn-primary" id="modal-confirm-btn">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/questions.js"></script>
+  <script src="js/sheets-api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
