@@ -348,7 +348,7 @@ const App = {
 
   /**
    * Validate answer using keyword/concept matching
-   * Extracts key concepts from acceptable answers and checks if user's answer contains them
+   * Checks if user's answer matches the key concepts of ANY acceptable answer
    */
   validateByKeywords(userAnswer, acceptableAnswers) {
     // Define synonym groups for common concepts
@@ -397,57 +397,46 @@ const App = {
       'america': ['america', 'american', 'united states', 'us', 'usa'],
     };
 
-    // Extract key words from acceptable answers
-    const keywordsFromAnswers = new Set();
+    const fillerWords = ['the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+         'have', 'has', 'had', 'do', 'does', 'did', 'for', 'and', 'but', 'or',
+         'because', 'that', 'this', 'there', 'their', 'they', 'them', 'can',
+         'will', 'would', 'could', 'should', 'one', 'each', 'every', 'of'];
+
+    // Check each acceptable answer SEPARATELY
     for (const answer of acceptableAnswers) {
       const words = this.normalizeAnswer(answer).split(' ');
-      words.forEach(word => {
-        if (word.length > 2) {
-          keywordsFromAnswers.add(word);
+      const keywords = words.filter(w => w.length > 2 && !fillerWords.includes(w));
+
+      if (keywords.length === 0) continue;
+
+      let matchedConcepts = 0;
+
+      for (const keyword of keywords) {
+        // Check if user's answer contains this keyword
+        if (userAnswer.includes(keyword)) {
+          matchedConcepts++;
+          continue;
         }
-      });
-    }
 
-    // Check how many key concepts the user's answer matches
-    let matchedConcepts = 0;
-    let totalConcepts = 0;
-
-    for (const keyword of keywordsFromAnswers) {
-      // Skip common filler words
-      if (['the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
-           'have', 'has', 'had', 'do', 'does', 'did', 'for', 'and', 'but', 'or',
-           'because', 'that', 'this', 'there', 'their', 'they', 'them', 'can',
-           'will', 'would', 'could', 'should', 'one', 'each', 'every'].includes(keyword)) {
-        continue;
-      }
-
-      totalConcepts++;
-
-      // Check if user's answer contains this keyword or a synonym
-      if (userAnswer.includes(keyword)) {
-        matchedConcepts++;
-        continue;
-      }
-
-      // Check synonyms
-      for (const [concept, synonyms] of Object.entries(synonymGroups)) {
-        if (synonyms.includes(keyword)) {
-          // Check if user used any synonym for this concept
-          for (const syn of synonyms) {
-            if (userAnswer.includes(syn)) {
-              matchedConcepts++;
-              break;
+        // Check synonyms
+        let foundSynonym = false;
+        for (const [concept, synonyms] of Object.entries(synonymGroups)) {
+          if (synonyms.includes(keyword)) {
+            for (const syn of synonyms) {
+              if (userAnswer.includes(syn)) {
+                matchedConcepts++;
+                foundSynonym = true;
+                break;
+              }
             }
+            break;
           }
-          break;
         }
       }
-    }
 
-    // Accept if user matched most key concepts (at least 60% or 2+ concepts)
-    if (totalConcepts > 0) {
-      const matchRatio = matchedConcepts / totalConcepts;
-      if (matchRatio >= 0.6 || (matchedConcepts >= 2 && totalConcepts <= 4)) {
+      // If user matched 60%+ of THIS answer's keywords, accept it
+      const matchRatio = matchedConcepts / keywords.length;
+      if (matchRatio >= 0.6 || (matchedConcepts >= 2 && keywords.length <= 3)) {
         return true;
       }
     }
@@ -583,10 +572,7 @@ const App = {
 
     // Update UI
     UI.updateChoiceStates(button, isCorrect, 'exam-choices-container');
-    UI.showExamFeedback(isCorrect);
-
-    // Move to next question after delay
-    setTimeout(() => this.nextExamQuestion(), 1500);
+    UI.showExamFeedback(isCorrect, question.answers);
   },
 
   /**
@@ -615,13 +601,10 @@ const App = {
     SheetsAPI.recordAnswer(question.id, isCorrect);
 
     // Show feedback
-    UI.showExamFeedback(isCorrect);
+    UI.showExamFeedback(isCorrect, question.answers);
 
     // Disable input
     if (input) input.disabled = true;
-
-    // Move to next question after delay
-    setTimeout(() => this.nextExamQuestion(), 1500);
   },
 
   /**

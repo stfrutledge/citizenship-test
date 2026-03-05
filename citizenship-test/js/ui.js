@@ -271,8 +271,8 @@ const UI = {
 
     if (answersEl && correctAnswers && correctAnswers.length > 0) {
       answersEl.innerHTML = `
-        <strong>Acceptable answers:</strong>
-        ${correctAnswers.join(', ')}
+        <strong>Official answers:</strong>
+        ${correctAnswers.map(a => `<div>• ${a}</div>`).join('')}
       `;
     }
   },
@@ -356,8 +356,9 @@ const UI = {
   /**
    * Show exam feedback
    */
-  showExamFeedback(isCorrect) {
+  showExamFeedback(isCorrect, correctAnswers) {
     const feedback = document.getElementById('exam-feedback');
+    const answersEl = document.getElementById('exam-correct-answers');
     if (!feedback) return;
 
     feedback.className = `feedback ${isCorrect ? 'correct' : 'incorrect'}`;
@@ -368,6 +369,13 @@ const UI = {
 
     if (icon) icon.textContent = isCorrect ? '✓' : '✗';
     if (text) text.textContent = isCorrect ? 'Correct!' : 'Incorrect';
+
+    if (answersEl && correctAnswers && correctAnswers.length > 0) {
+      answersEl.innerHTML = `
+        <strong>Official answers:</strong>
+        ${correctAnswers.map(a => `<div>• ${a}</div>`).join('')}
+      `;
+    }
   },
 
   /**

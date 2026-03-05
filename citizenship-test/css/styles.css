@@ -597,6 +597,11 @@ body {
   margin-bottom: var(--spacing-xs);
 }
 
+.next-question-btn {
+  margin-top: var(--spacing-lg);
+  width: 100%;
+}
+
 /* Question Navigation */
 .question-nav {
   display: flex;
