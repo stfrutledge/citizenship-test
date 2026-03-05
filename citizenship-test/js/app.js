@@ -24,6 +24,7 @@ const App = {
     examAnswers: [],
     examScore: 0,
     examInProgress: false,
+    examJustSubmitted: false,
 
     // Weak areas state
     weakQuestions: [],
@@ -120,6 +121,7 @@ const App = {
 
     document.getElementById('exam-typed-input')?.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
+        e.stopPropagation();
         this.submitExamAnswer();
       }
     });
@@ -127,6 +129,24 @@ const App = {
     document.getElementById('weak-typed-input')?.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         this.checkWeakAnswer();
+      }
+    });
+
+    // Enter key to advance to next question when feedback is showing
+    document.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        // Skip if we just submitted (wait for second Enter)
+        if (this.state.examJustSubmitted) {
+          this.state.examJustSubmitted = false;
+          return;
+        }
+        // Check if exam feedback is visible (answer was submitted)
+        const examFeedback = document.getElementById('exam-feedback');
+        if (this.state.currentScreen === 'exam' &&
+            examFeedback &&
+            examFeedback.style.display !== 'none') {
+          this.nextExamQuestion();
+        }
       }
     });
 
@@ -531,8 +551,12 @@ const App = {
    * Start exam mode
    */
   startExamMode() {
-    // Select 10 random questions
-    const shuffled = [...QUESTIONS].sort(() => Math.random() - 0.5);
+    // Select 10 random questions using Fisher-Yates shuffle
+    const shuffled = [...QUESTIONS];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
     this.state.examQuestions = shuffled.slice(0, 10);
     this.state.examCurrentIndex = 0;
     this.state.examAnswers = [];
@@ -573,6 +597,9 @@ const App = {
     // Update UI
     UI.updateChoiceStates(button, isCorrect, 'exam-choices-container');
     UI.showExamFeedback(isCorrect, question.answers);
+
+    // Mark as just submitted so Enter doesn't immediately advance
+    this.state.examJustSubmitted = true;
   },
 
   /**
@@ -580,6 +607,13 @@ const App = {
    */
   submitExamAnswer() {
     const input = document.getElementById('exam-typed-input');
+
+    // If input is disabled, answer was already submitted - advance instead
+    if (input?.disabled) {
+      this.nextExamQuestion();
+      return;
+    }
+
     const userAnswer = input?.value.trim();
 
     if (!userAnswer) return;
@@ -603,8 +637,9 @@ const App = {
     // Show feedback
     UI.showExamFeedback(isCorrect, question.answers);
 
-    // Disable input
+    // Disable input and mark as just submitted
     if (input) input.disabled = true;
+    this.state.examJustSubmitted = true;
   },
 
   /**
