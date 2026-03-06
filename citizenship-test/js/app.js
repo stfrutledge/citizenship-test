@@ -24,7 +24,6 @@ const App = {
     examAnswers: [],
     examScore: 0,
     examInProgress: false,
-    examJustSubmitted: false,
 
     // Weak areas state
     weakQuestions: [],
@@ -112,9 +111,10 @@ const App = {
    * Set up event listeners
    */
   setupEventListeners() {
-    // Enter key for typed answers
+    // Enter key for typed answers in study mode
     document.getElementById('typed-answer-input')?.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
+        e.stopPropagation();
         this.checkTypedAnswer();
       }
     });
@@ -135,17 +135,19 @@ const App = {
     // Enter key to advance to next question when feedback is showing
     document.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
-        // Skip if we just submitted (wait for second Enter)
-        if (this.state.examJustSubmitted) {
-          this.state.examJustSubmitted = false;
-          return;
-        }
         // Check if exam feedback is visible (answer was submitted)
         const examFeedback = document.getElementById('exam-feedback');
         if (this.state.currentScreen === 'exam' &&
             examFeedback &&
             examFeedback.style.display !== 'none') {
           this.nextExamQuestion();
+        }
+        // Check if study mode feedback is visible
+        const studyFeedback = document.getElementById('answer-feedback');
+        if (this.state.currentScreen === 'study' &&
+            studyFeedback &&
+            studyFeedback.style.display !== 'none') {
+          this.nextQuestion();
         }
       }
     });
@@ -244,7 +246,59 @@ const App = {
     }
 
     this.state.studyQuestions = questions;
+    this.state.currentQuestionIndex = 0;
     UI.renderQuestionsList(questions, this.state.questionStats);
+    UI.showQuestionsList();
+  },
+
+  /**
+   * Shuffle the current study questions
+   */
+  shuffleStudyQuestions() {
+    // Fisher-Yates shuffle
+    const questions = [...this.state.studyQuestions];
+    for (let i = questions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [questions[i], questions[j]] = [questions[j], questions[i]];
+    }
+    this.state.studyQuestions = questions;
+    UI.renderQuestionsList(questions, this.state.questionStats);
+  },
+
+  /**
+   * Start studying questions one at a time
+   */
+  startOneAtATime() {
+    if (this.state.studyQuestions.length === 0) {
+      return;
+    }
+    this.state.currentQuestionIndex = 0;
+    const question = this.state.studyQuestions[0];
+    UI.renderQuestion(question, this.state.answerMode);
+  },
+
+  /**
+   * Shuffle remaining questions and continue studying
+   */
+  shuffleAndContinue() {
+    // Get remaining questions (from current index onwards)
+    const remaining = this.state.studyQuestions.slice(this.state.currentQuestionIndex);
+
+    // Fisher-Yates shuffle
+    for (let i = remaining.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
+    }
+
+    // Replace remaining portion of study questions
+    this.state.studyQuestions = [
+      ...this.state.studyQuestions.slice(0, this.state.currentQuestionIndex),
+      ...remaining
+    ];
+
+    // Show the current (now shuffled) question
+    const question = this.state.studyQuestions[this.state.currentQuestionIndex];
+    UI.renderQuestion(question, this.state.answerMode);
   },
 
   /**
@@ -311,8 +365,11 @@ const App = {
     // Show feedback
     UI.showFeedback(isCorrect, question.answers);
 
-    // Disable input
-    if (input) input.disabled = true;
+    // Disable and blur input so next Enter advances
+    if (input) {
+      input.disabled = true;
+      input.blur();
+    }
 
     // Update local stats
     const statIndex = this.state.questionStats.findIndex(s => s.questionId === question.id);
@@ -352,8 +409,9 @@ const App = {
         return true;
       }
 
-      // Fuzzy match - allow for minor typos
-      if (this.fuzzyMatch(normalizedUser, normalizedAcceptable, 2)) {
+      // Fuzzy match - allow for minor typos (but not for short numeric answers)
+      const isNumeric = /^\d+$/.test(normalizedUser);
+      if (!isNumeric && this.fuzzyMatch(normalizedUser, normalizedAcceptable, 2)) {
         return true;
       }
     }
@@ -387,6 +445,7 @@ const App = {
       // Government concepts
       'constitution': ['constitution', 'constitutional'],
       'president': ['president', 'presidential'],
+      'vice president': ['vice president', 'vp', 'vice-president'],
       'congress': ['congress', 'congressional'],
       'senator': ['senator', 'senators', 'senate'],
       'representative': ['representative', 'representatives', 'rep'],
@@ -406,6 +465,8 @@ const App = {
       'independence': ['independence', 'independent', 'free', 'freedom'],
       'citizen': ['citizen', 'citizens', 'citizenship'],
       'war': ['war', 'wars', 'fought', 'battle'],
+      'world war i': ['world war i', 'world war 1', 'wwi', 'ww1', 'first world war'],
+      'world war ii': ['world war ii', 'world war 2', 'wwii', 'ww2', 'second world war'],
       'rights': ['rights', 'right', 'freedom', 'freedoms', 'liberty'],
       // People
       'washington': ['washington', 'george washington'],
@@ -597,9 +658,6 @@ const App = {
     // Update UI
     UI.updateChoiceStates(button, isCorrect, 'exam-choices-container');
     UI.showExamFeedback(isCorrect, question.answers);
-
-    // Mark as just submitted so Enter doesn't immediately advance
-    this.state.examJustSubmitted = true;
   },
 
   /**
@@ -637,9 +695,11 @@ const App = {
     // Show feedback
     UI.showExamFeedback(isCorrect, question.answers);
 
-    // Disable input and mark as just submitted
-    if (input) input.disabled = true;
-    this.state.examJustSubmitted = true;
+    // Disable and blur input so next Enter goes to document handler
+    if (input) {
+      input.disabled = true;
+      input.blur();
+    }
   },
 
   /**

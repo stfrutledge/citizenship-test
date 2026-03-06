@@ -104,10 +104,16 @@
           </div>
         </div>
 
-        <div class="answer-mode-toggle">
-          <span>Answer Mode:</span>
-          <button class="toggle-btn active" data-mode="multiple" onclick="App.setAnswerMode('multiple')">Multiple Choice</button>
-          <button class="toggle-btn" data-mode="typed" onclick="App.setAnswerMode('typed')">Typed Answer</button>
+        <div class="study-options">
+          <div class="answer-mode-toggle">
+            <span>Answer Mode:</span>
+            <button class="toggle-btn active" data-mode="multiple" onclick="App.setAnswerMode('multiple')">Multiple Choice</button>
+            <button class="toggle-btn" data-mode="typed" onclick="App.setAnswerMode('typed')">Typed Answer</button>
+          </div>
+          <div class="study-actions">
+            <button class="btn-secondary" onclick="App.shuffleStudyQuestions()">Shuffle</button>
+            <button class="btn-primary" onclick="App.startOneAtATime()">Study One at a Time</button>
+          </div>
         </div>
 
         <div class="questions-list" id="questions-list">
@@ -141,6 +147,7 @@
 
             <div class="question-nav">
               <button class="nav-prev" onclick="App.previousQuestion()">← Previous</button>
+              <button class="btn-secondary shuffle-inline-btn" onclick="App.shuffleAndContinue()">Shuffle</button>
               <button class="show-answer-btn" onclick="App.showAnswer()">Show Answer</button>
               <button class="nav-next" onclick="App.nextQuestion()">Next →</button>
             </div>

@@ -81,7 +81,7 @@ const QUESTIONS = [
   {
     id: 7,
     question: "How many amendments does the Constitution have?",
-    answers: ["twenty-seven (27)"],
+    answers: ["twenty-seven (27)", "27", "twenty-seven", "twentyseven"],
     category: "American Government",
     subcategory: "Principles of American Democracy",
     is65_20: false,
@@ -223,7 +223,7 @@ const QUESTIONS = [
   {
     id: 18,
     question: "How many U.S. Senators are there?",
-    answers: ["one hundred (100)"],
+    answers: ["one hundred (100)", "100", "one hundred"],
     category: "American Government",
     subcategory: "System of Government",
     is65_20: false,
@@ -233,7 +233,7 @@ const QUESTIONS = [
   {
     id: 19,
     question: "We elect a U.S. Senator for how many years?",
-    answers: ["six (6)"],
+    answers: ["six (6)", "6", "six"],
     category: "American Government",
     subcategory: "System of Government",
     is65_20: false,
@@ -257,7 +257,7 @@ const QUESTIONS = [
   {
     id: 21,
     question: "The House of Representatives has how many voting members?",
-    answers: ["four hundred thirty-five (435)"],
+    answers: ["four hundred thirty-five (435)", "435", "four hundred thirty-five"],
     category: "American Government",
     subcategory: "System of Government",
     is65_20: false,
@@ -267,7 +267,7 @@ const QUESTIONS = [
   {
     id: 22,
     question: "We elect a U.S. Representative for how many years?",
-    answers: ["two (2)"],
+    answers: ["two (2)", "2", "two"],
     category: "American Government",
     subcategory: "System of Government",
     is65_20: false,
@@ -301,7 +301,11 @@ const QUESTIONS = [
     answers: [
       "(because of) the state's population",
       "(because) they have more people",
-      "(because) some states have more people"
+      "(because) some states have more people",
+      "population",
+      "bigger population",
+      "larger population",
+      "more people"
     ],
     category: "American Government",
     subcategory: "System of Government",
@@ -312,7 +316,7 @@ const QUESTIONS = [
   {
     id: 26,
     question: "We elect a President for how many years?",
-    answers: ["four (4)"],
+    answers: ["four (4)", "4", "four"],
     category: "American Government",
     subcategory: "System of Government",
     is65_20: true,
@@ -360,7 +364,7 @@ const QUESTIONS = [
   {
     id: 30,
     question: "If the President can no longer serve, who becomes President?",
-    answers: ["the Vice President"],
+    answers: ["the Vice President", "Vice President", "VP"],
     category: "American Government",
     subcategory: "System of Government",
     is65_20: false,
@@ -472,7 +476,7 @@ const QUESTIONS = [
   {
     id: 39,
     question: "How many justices are on the Supreme Court?",
-    answers: ["nine (9)"],
+    answers: ["nine (9)", "9", "nine"],
     category: "American Government",
     subcategory: "System of Government",
     is65_20: false,
@@ -665,7 +669,7 @@ const QUESTIONS = [
   {
     id: 54,
     question: "How old do citizens have to be to vote for President?",
-    answers: ["eighteen (18) and older"],
+    answers: ["eighteen (18) and older", "18", "eighteen", "18 and older"],
     category: "American Government",
     subcategory: "Rights and Responsibilities",
     is65_20: true,
@@ -1003,7 +1007,13 @@ const QUESTIONS = [
       "World War II",
       "Korean War",
       "Vietnam War",
-      "(Persian) Gulf War"
+      "(Persian) Gulf War",
+      "WWI",
+      "WWII",
+      "WW1",
+      "WW2",
+      "Gulf War",
+      "Desert Storm"
     ],
     category: "American History",
     subcategory: "Recent American History",
@@ -1044,7 +1054,7 @@ const QUESTIONS = [
   {
     id: 82,
     question: "Before he was President, Eisenhower was a general. What war was he in?",
-    answers: ["World War II"],
+    answers: ["World War II", "WWII", "WW2", "World War 2", "the Second World War"],
     category: "American History",
     subcategory: "Recent American History",
     is65_20: false,
