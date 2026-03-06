@@ -712,16 +712,13 @@ body {
 
 .score-display {
   margin-bottom: var(--spacing-xl);
+  text-align: center;
 }
 
 .score-circle {
   display: inline-flex;
   align-items: baseline;
   justify-content: center;
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background: var(--bg-secondary);
   margin-bottom: var(--spacing-sm);
 }
 
