@@ -9,7 +9,7 @@ const App = {
   // Application state
   state: {
     currentScreen: 'home',
-    answerMode: 'multiple', // 'multiple', 'typed', or 'both'
+    answerMode: 'typed', // typed answers only
     weakThreshold: 70,
     darkMode: false,
 
@@ -96,25 +96,23 @@ const App = {
   applySettings() {
     const settings = this.state.settings;
 
-    // Answer mode
-    if (settings.answerMode) {
-      this.state.answerMode = settings.answerMode;
-    }
+    // Answer mode is always 'typed' - no longer configurable
+    this.state.answerMode = 'typed';
 
     // Weak threshold
     if (settings.weakThreshold) {
       this.state.weakThreshold = parseInt(settings.weakThreshold);
     }
 
-    // Dark mode
-    if (settings.darkMode === 'true' || settings.darkMode === true) {
+    // Dark mode (from localStorage, not Google Sheets)
+    const darkMode = localStorage.getItem('darkMode');
+    if (darkMode === 'true') {
       this.state.darkMode = true;
       UI.toggleDarkMode(true);
     }
 
     // Update settings UI if on settings screen
     UI.updateSettingsUI({
-      answerMode: this.state.answerMode,
       weakThreshold: this.state.weakThreshold,
       darkMode: this.state.darkMode
     });
@@ -946,7 +944,7 @@ const App = {
 
     this.state.darkMode = enabled;
     UI.toggleDarkMode(enabled);
-    this.updateSetting('darkMode', enabled.toString());
+    localStorage.setItem('darkMode', enabled.toString());
   },
 
   /**

@@ -128,9 +128,7 @@ function initializeSheets() {
   }
   if (settingsSheet.getLastRow() === 0) {
     settingsSheet.appendRow(['Setting', 'Value']);
-    settingsSheet.appendRow(['answerMode', 'multiple']);
     settingsSheet.appendRow(['weakThreshold', '70']);
-    settingsSheet.appendRow(['darkMode', 'false']);
   }
 
   return { success: true, message: 'Sheets initialized' };

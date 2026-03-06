@@ -82,12 +82,9 @@ const SheetsAPI = {
     try {
       const response = await fetch(url.toString(), {
         method: 'GET',
-        mode: 'cors'
+        mode: 'cors',
+        redirect: 'follow'
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error: ${response.status}`);
-      }
 
       return await response.json();
     } catch (error) {
@@ -109,15 +106,12 @@ const SheetsAPI = {
       const response = await fetch(this.config.deploymentUrl, {
         method: 'POST',
         mode: 'cors',
+        redirect: 'follow',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'text/plain'
         },
         body: JSON.stringify(data)
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error: ${response.status}`);
-      }
 
       const result = await response.json();
 
@@ -359,9 +353,7 @@ const SheetsAPI = {
         data = JSON.parse(localStorage.getItem('settings') || '{}');
         if (Object.keys(data).length === 0) {
           data = {
-            answerMode: 'multiple',
-            weakThreshold: 70,
-            darkMode: false
+            weakThreshold: 70
           };
           localStorage.setItem('settings', JSON.stringify(data));
         }

@@ -105,11 +105,6 @@
         </div>
 
         <div class="study-options">
-          <div class="answer-mode-toggle">
-            <span>Answer Mode:</span>
-            <button class="toggle-btn active" data-mode="multiple" onclick="App.setAnswerMode('multiple')">Multiple Choice</button>
-            <button class="toggle-btn" data-mode="typed" onclick="App.setAnswerMode('typed')">Typed Answer</button>
-          </div>
           <div class="study-actions">
             <button class="btn-secondary" onclick="App.shuffleStudyQuestions()">Shuffle</button>
             <button class="btn-primary" onclick="App.startOneAtATime()">Study One at a Time</button>
@@ -328,24 +323,6 @@
         <div class="settings-header">
           <button class="back-btn" onclick="App.showScreen('home')">← Back</button>
           <h2>Settings</h2>
-        </div>
-
-        <div class="settings-section">
-          <h3>Answer Mode</h3>
-          <div class="setting-option">
-            <label>
-              <input type="radio" name="answer-mode" value="multiple" checked onchange="App.updateSetting('answerMode', 'multiple')">
-              Multiple Choice
-            </label>
-            <label>
-              <input type="radio" name="answer-mode" value="typed" onchange="App.updateSetting('answerMode', 'typed')">
-              Typed Answer
-            </label>
-            <label>
-              <input type="radio" name="answer-mode" value="both" onchange="App.updateSetting('answerMode', 'both')">
-              Both (Alternate)
-            </label>
-          </div>
         </div>
 
         <div class="settings-section">

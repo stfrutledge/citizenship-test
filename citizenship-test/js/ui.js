@@ -141,7 +141,7 @@ const UI = {
   /**
    * Render a question for practice
    */
-  renderQuestion(question, mode = 'multiple') {
+  renderQuestion(question, mode = 'typed') {
     const questionsList = document.getElementById('questions-list');
     const questionPractice = document.getElementById('question-practice');
 
@@ -336,7 +336,7 @@ const UI = {
   /**
    * Render exam question
    */
-  renderExamQuestion(question, questionNum, mode = 'multiple') {
+  renderExamQuestion(question, questionNum, mode = 'typed') {
     document.getElementById('exam-current').textContent = questionNum;
     document.getElementById('exam-progress-fill').style.width = `${(questionNum / 10) * 100}%`;
     document.getElementById('exam-q-text').textContent = question.question;
@@ -446,7 +446,7 @@ const UI = {
   /**
    * Render weak area question
    */
-  renderWeakQuestion(question, weakInfo, mode = 'multiple') {
+  renderWeakQuestion(question, weakInfo, mode = 'typed') {
     const intro = document.getElementById('weak-intro');
     const practice = document.getElementById('weak-practice');
 
@@ -567,12 +567,6 @@ const UI = {
    * Update settings UI
    */
   updateSettingsUI(settings) {
-    // Answer mode
-    const answerModeRadios = document.querySelectorAll('input[name="answer-mode"]');
-    answerModeRadios.forEach(radio => {
-      radio.checked = radio.value === settings.answerMode;
-    });
-
     // Weak threshold
     const weakThreshold = document.getElementById('weak-threshold');
     if (weakThreshold) {
