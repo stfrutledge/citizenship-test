@@ -483,30 +483,32 @@ const SheetsAPI = {
     for (let i = 1; i <= 100; i++) {
       const stat = stats.find(s => s.questionId === i);
 
-      if (!stat || stat.timesAsked === 0) {
-        // Never practiced - consider weak
-        weakQuestions.push({
-          questionId: i,
-          reason: 'Not yet practiced',
-          successRate: 0
-        });
-      } else if (stat.successRate < threshold) {
-        // Below threshold
-        weakQuestions.push({
-          questionId: i,
-          reason: `Low accuracy (${stat.successRate.toFixed(0)}%)`,
-          successRate: stat.successRate
-        });
-      } else if (stat.lastAsked) {
-        // Check if not practiced recently (30+ days)
-        const lastAsked = new Date(stat.lastAsked);
-        const daysSince = (Date.now() - lastAsked.getTime()) / (1000 * 60 * 60 * 24);
-        if (daysSince > 30) {
+      // Only include questions that have been practiced
+      if (stat && stat.timesAsked > 0) {
+        // Normalize successRate - handle both decimal (0-1) and percentage (0-100) formats
+        let rate = stat.successRate;
+        if (rate <= 1 && stat.timesAsked > 0) {
+          rate = rate * 100; // Convert decimal to percentage
+        }
+
+        if (rate < threshold) {
+          // Below threshold - struggled with this question
           weakQuestions.push({
             questionId: i,
-            reason: `Not practiced in ${Math.floor(daysSince)} days`,
-            successRate: stat.successRate
+            reason: `Low accuracy (${rate.toFixed(0)}%)`,
+            successRate: rate
           });
+        } else if (stat.lastAsked) {
+          // Check if not practiced recently (30+ days)
+          const lastAsked = new Date(stat.lastAsked);
+          const daysSince = (Date.now() - lastAsked.getTime()) / (1000 * 60 * 60 * 24);
+          if (daysSince > 30) {
+            weakQuestions.push({
+              questionId: i,
+              reason: `Not practiced in ${Math.floor(daysSince)} days`,
+              successRate: rate
+            });
+          }
         }
       }
     }
@@ -528,13 +530,23 @@ const SheetsAPI = {
 
     let totalAsked = 0;
     let totalCorrect = 0;
-    let questionsPracticed = 0;
+    let questionsPracticedToday = 0;
+
+    // Get today's date at midnight for comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     stats.forEach(stat => {
       totalAsked += stat.timesAsked || 0;
       totalCorrect += stat.timesCorrect || 0;
-      if (stat.timesAsked > 0) {
-        questionsPracticed++;
+
+      // Check if question was practiced today
+      if (stat.lastAsked) {
+        const lastAsked = new Date(stat.lastAsked);
+        lastAsked.setHours(0, 0, 0, 0);
+        if (lastAsked.getTime() === today.getTime()) {
+          questionsPracticedToday++;
+        }
       }
     });
 
@@ -544,7 +556,7 @@ const SheetsAPI = {
     return {
       totalAsked: totalAsked,
       totalCorrect: totalCorrect,
-      questionsPracticed: questionsPracticed,
+      questionsPracticedToday: questionsPracticedToday,
       accuracy: accuracy,
       examsTaken: history.length,
       examsPassed: examsPassed

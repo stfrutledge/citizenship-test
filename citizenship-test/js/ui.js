@@ -94,7 +94,7 @@ const UI = {
     const accuracy = document.getElementById('home-accuracy');
     const examsPassed = document.getElementById('home-exams-passed');
 
-    if (totalPracticed) totalPracticed.textContent = stats.questionsPracticed || 0;
+    if (totalPracticed) totalPracticed.textContent = `${stats.questionsPracticedToday || 0}/100`;
     if (accuracy) accuracy.textContent = `${(stats.accuracy || 0).toFixed(0)}%`;
     if (examsPassed) examsPassed.textContent = stats.examsPassed || 0;
   },
@@ -425,6 +425,12 @@ const UI = {
       } else {
         missedContainer.style.display = 'none';
       }
+    }
+
+    // Hide "Review Missed Questions" button if perfect score
+    const reviewBtn = document.getElementById('review-missed-btn');
+    if (reviewBtn) {
+      reviewBtn.style.display = missedQuestions.length > 0 ? 'block' : 'none';
     }
   },
 

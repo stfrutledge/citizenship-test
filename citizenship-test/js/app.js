@@ -139,6 +139,7 @@ const App = {
 
     document.getElementById('weak-typed-input')?.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
+        e.stopPropagation();
         this.checkWeakAnswer();
       }
     });
@@ -159,6 +160,13 @@ const App = {
             studyFeedback &&
             studyFeedback.style.display !== 'none') {
           this.nextQuestion();
+        }
+        // Check if weak areas feedback is visible
+        const weakFeedback = document.getElementById('weak-feedback');
+        if (this.state.currentScreen === 'weak' &&
+            weakFeedback &&
+            weakFeedback.style.display !== 'none') {
+          this.nextWeakQuestion();
         }
       }
     });
@@ -420,10 +428,47 @@ const App = {
         return true;
       }
 
+      // Check if key numbers match (e.g., "18" in both answers)
+      const userNumbers = normalizedUser.match(/\d+/g) || [];
+      const acceptableNumbers = normalizedAcceptable.match(/\d+/g) || [];
+      if (userNumbers.length > 0 && acceptableNumbers.length > 0) {
+        const hasMatchingNumber = userNumbers.some(n => acceptableNumbers.includes(n));
+        if (hasMatchingNumber) {
+          // Numbers match - check for context similarity (age, years, etc.)
+          const ageContext = ['age', 'years', 'old', 'eighteen', 'eighteen'];
+          const hasAgeContext = ageContext.some(word =>
+            normalizedUser.includes(word) || normalizedAcceptable.includes(word)
+          );
+          if (hasAgeContext) {
+            return true;
+          }
+        }
+      }
+
       // Fuzzy match - allow for minor typos (but not for short numeric answers)
       const isNumeric = /^\d+$/.test(normalizedUser);
       if (!isNumeric && this.fuzzyMatch(normalizedUser, normalizedAcceptable, 2)) {
         return true;
+      }
+
+      // Check for equivalent locations (e.g., "New York" = "World Trade Center")
+      const locationEquivalents = [
+        [['new york', 'nyc'], ['world trade center', 'wtc']],
+        [['washington dc', 'washington', 'dc'], ['pentagon']],
+      ];
+
+      if (normalizedUser.includes('terrorist') || normalizedUser.includes('attack')) {
+        for (const [group1, group2] of locationEquivalents) {
+          const userHasGroup1 = group1.some(loc => normalizedUser.includes(loc));
+          const userHasGroup2 = group2.some(loc => normalizedUser.includes(loc));
+          const acceptableHasGroup1 = group1.some(loc => normalizedAcceptable.includes(loc));
+          const acceptableHasGroup2 = group2.some(loc => normalizedAcceptable.includes(loc));
+
+          // User used equivalent location
+          if ((userHasGroup1 && acceptableHasGroup2) || (userHasGroup2 && acceptableHasGroup1)) {
+            return true;
+          }
+        }
       }
     }
 
@@ -487,6 +532,10 @@ const App = {
       // Places
       'britain': ['britain', 'british', 'england', 'english', 'great britain'],
       'america': ['america', 'american', 'united states', 'us', 'usa'],
+      'new york': ['new york', 'nyc', 'world trade center', 'wtc'],
+      'washington dc': ['washington dc', 'washington', 'pentagon', 'dc'],
+      // Events
+      'terrorists attacked': ['terrorists attacked', 'terrorist attack', '911', '9/11', 'september 11'],
     };
 
     const fillerWords = ['the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
@@ -623,13 +672,38 @@ const App = {
    * Start exam mode
    */
   startExamMode() {
-    // Select 10 random questions using Fisher-Yates shuffle
-    const shuffled = [...QUESTIONS];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    // Ensure at least 2 questions from each category
+    const categories = ['American Government', 'American History', 'Integrated Civics'];
+    const selectedQuestions = [];
+    const usedIds = new Set();
+
+    // Helper to shuffle an array
+    const shuffle = (arr) => {
+      const result = [...arr];
+      for (let i = result.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [result[i], result[j]] = [result[j], result[i]];
+      }
+      return result;
+    };
+
+    // Select 2 random questions from each category
+    for (const category of categories) {
+      const categoryQuestions = shuffle(QUESTIONS.filter(q => q.category === category));
+      for (let i = 0; i < 2 && i < categoryQuestions.length; i++) {
+        selectedQuestions.push(categoryQuestions[i]);
+        usedIds.add(categoryQuestions[i].id);
+      }
     }
-    this.state.examQuestions = shuffled.slice(0, 10);
+
+    // Fill remaining slots (4 more) with random questions from any category
+    const remaining = shuffle(QUESTIONS.filter(q => !usedIds.has(q.id)));
+    for (let i = 0; i < 4 && i < remaining.length; i++) {
+      selectedQuestions.push(remaining[i]);
+    }
+
+    // Shuffle the final selection so categories aren't grouped
+    this.state.examQuestions = shuffle(selectedQuestions);
     this.state.examCurrentIndex = 0;
     this.state.examAnswers = [];
     this.state.examScore = 0;
@@ -861,6 +935,13 @@ const App = {
    */
   checkWeakAnswer() {
     const input = document.getElementById('weak-typed-input');
+
+    // If input is disabled, answer was already submitted - advance instead
+    if (input?.disabled) {
+      this.nextWeakQuestion();
+      return;
+    }
+
     const userAnswer = input?.value.trim();
 
     if (!userAnswer) return;
@@ -875,8 +956,11 @@ const App = {
     // Show feedback
     UI.showFeedback(isCorrect, question.answers, 'weak-feedback', 'weak-correct-answers');
 
-    // Disable input
-    if (input) input.disabled = true;
+    // Disable and blur input so next Enter advances
+    if (input) {
+      input.disabled = true;
+      input.blur();
+    }
   },
 
   /**

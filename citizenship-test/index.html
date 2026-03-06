@@ -38,8 +38,8 @@
 
         <div class="quick-stats">
           <div class="stat-card">
-            <span class="stat-value" id="home-total-practiced">0</span>
-            <span class="stat-label">Questions Practiced</span>
+            <span class="stat-value" id="home-total-practiced">0/100</span>
+            <span class="stat-label">Questions Practiced Today</span>
           </div>
           <div class="stat-card">
             <span class="stat-value" id="home-accuracy">0%</span>
@@ -214,7 +214,7 @@
 
           <div class="results-actions">
             <button class="btn-primary" onclick="App.startExamMode()">Take Another Exam</button>
-            <button class="btn-secondary" onclick="App.reviewMissedQuestions()">Review Missed Questions</button>
+            <button id="review-missed-btn" class="btn-secondary" onclick="App.reviewMissedQuestions()">Review Missed Questions</button>
             <button class="btn-secondary" onclick="App.showScreen('home')">Back to Home</button>
           </div>
         </div>
