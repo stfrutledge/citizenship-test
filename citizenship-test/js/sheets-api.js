@@ -8,7 +8,7 @@
 const SheetsAPI = {
   // Configuration
   config: {
-    deploymentUrl: '', // Set via settings
+    deploymentUrl: 'https://script.google.com/macros/s/AKfycbxc-UccdSiJsJDGSHvasjLtQvZVX87serZtMuzp_ySJFs2bj_oQlH_XPflj2sZYxHMwFg/exec',
     useLocalStorage: true, // Fallback to localStorage when no URL is set
     cacheTimeout: 5 * 60 * 1000 // 5 minutes cache
   },
