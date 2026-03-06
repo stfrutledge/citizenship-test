@@ -69,6 +69,19 @@ const App = {
         this.state.questionStats = result.data.questionStats || [];
         this.state.examHistory = result.data.examHistory || [];
         this.state.settings = result.data.settings || {};
+
+        // Auto-initialize sheets if empty (first time setup)
+        if (this.state.questionStats.length === 0 && SheetsAPI.isConfigured()) {
+          console.log('Sheets empty, initializing...');
+          await SheetsAPI.initializeSheets();
+          // Reload data after initialization
+          const refreshed = await SheetsAPI.getAllData(true);
+          if (refreshed.success) {
+            this.state.questionStats = refreshed.data.questionStats || [];
+            this.state.examHistory = refreshed.data.examHistory || [];
+            this.state.settings = refreshed.data.settings || {};
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading data:', error);
