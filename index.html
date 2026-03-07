@@ -348,16 +348,6 @@
           </div>
         </div>
 
-        <div class="settings-section">
-          <h3>Google Sheets Integration</h3>
-          <div class="setting-option">
-            <label for="sheets-url">Apps Script Deployment URL:</label>
-            <input type="text" id="sheets-url" class="text-input" placeholder="https://script.google.com/macros/s/..." onchange="App.updateSetting('sheetsUrl', this.value)">
-            <button class="btn-small" onclick="App.testSheetsConnection()">Test Connection</button>
-            <span class="connection-status" id="sheets-status"></span>
-          </div>
-        </div>
-
         <div class="settings-section danger">
           <h3>Data Management</h3>
           <div class="setting-option">
