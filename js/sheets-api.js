@@ -86,7 +86,20 @@ const SheetsAPI = {
         redirect: 'follow'
       });
 
-      return await response.json();
+      if (!response.ok) {
+        console.warn('Sheets API returned non-OK status:', response.status);
+        return this.getLocalData(params.action);
+      }
+
+      const data = await response.json();
+
+      // Verify we got valid data back
+      if (!data || typeof data !== 'object') {
+        console.warn('Sheets API returned invalid data');
+        return this.getLocalData(params.action);
+      }
+
+      return data;
     } catch (error) {
       console.error('Sheets API GET error:', error);
       // Fallback to localStorage

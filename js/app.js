@@ -65,7 +65,7 @@ const App = {
     try {
       const result = await SheetsAPI.getAllData(true);
 
-      if (result.success) {
+      if (result.success && result.data) {
         this.state.questionStats = result.data.questionStats || [];
         this.state.examHistory = result.data.examHistory || [];
         this.state.settings = result.data.settings || {};
@@ -76,18 +76,36 @@ const App = {
           await SheetsAPI.initializeSheets();
           // Reload data after initialization
           const refreshed = await SheetsAPI.getAllData(true);
-          if (refreshed.success) {
+          if (refreshed.success && refreshed.data) {
             this.state.questionStats = refreshed.data.questionStats || [];
             this.state.examHistory = refreshed.data.examHistory || [];
             this.state.settings = refreshed.data.settings || {};
           }
         }
+      } else {
+        // API failed - fall back to localStorage
+        console.log('API unavailable, using localStorage');
+        this.loadFromLocalStorage();
       }
     } catch (error) {
       console.error('Error loading data:', error);
+      // Fall back to localStorage on any error
+      this.loadFromLocalStorage();
     }
 
     UI.hideLoading();
+  },
+
+  /**
+   * Load data from localStorage (fallback)
+   */
+  loadFromLocalStorage() {
+    const localData = SheetsAPI.getLocalData('getAllData');
+    if (localData.success && localData.data) {
+      this.state.questionStats = localData.data.questionStats || [];
+      this.state.examHistory = localData.data.examHistory || [];
+      this.state.settings = localData.data.settings || {};
+    }
   },
 
   /**
