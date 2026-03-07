@@ -108,7 +108,12 @@ const UI = {
 
     container.innerHTML = questions.map(q => {
       const stat = stats.find(s => s.questionId === q.id) || {};
-      const accuracy = stat.timesAsked > 0 ? stat.successRate : null;
+      // successRate may be decimal (0-1) or percentage (0-100) depending on source
+      let accuracy = stat.timesAsked > 0 ? stat.successRate : null;
+      // Convert decimal to percentage if needed
+      if (accuracy !== null && accuracy <= 1 && stat.timesAsked > 0) {
+        accuracy = accuracy * 100;
+      }
 
       let badgeClass = 'new';
       let badgeText = 'New';
