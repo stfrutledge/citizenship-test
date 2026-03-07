@@ -524,9 +524,13 @@ const App = {
       // Actions/concepts
       'represent': ['represent', 'represents', 'representing', 'representation', 'stands for', 'symbolize', 'symbolizes'],
       'protect': ['protect', 'protects', 'protecting', 'protection', 'defend', 'defends'],
+      'resolve': ['resolve', 'resolves', 'resolving', 'resolution', 'settle', 'settles', 'decide', 'decides'],
+      'review': ['review', 'reviews', 'reviewing', 'examine', 'examines'],
+      'explain': ['explain', 'explains', 'explaining', 'interpret', 'interprets'],
       'freedom': ['freedom', 'free', 'liberty', 'right', 'rights'],
       'vote': ['vote', 'voting', 'elect', 'election'],
       'law': ['law', 'laws', 'legal', 'legislation'],
+      'dispute': ['dispute', 'disputes', 'disagreement', 'disagreements', 'conflict', 'conflicts'],
       'state': ['state', 'states'],
       'colony': ['colony', 'colonies', 'colonial'],
       'amendment': ['amendment', 'amendments', 'change', 'addition'],
