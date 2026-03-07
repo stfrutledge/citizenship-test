@@ -64,16 +64,13 @@ const App = {
 
     try {
       const result = await SheetsAPI.getAllData(true);
-      console.log('getAllData result:', result);
 
       if (result.success && result.data) {
         this.state.questionStats = result.data.questionStats || [];
         this.state.examHistory = result.data.examHistory || [];
         this.state.settings = result.data.settings || {};
-        console.log('Loaded from API, questionStats count:', this.state.questionStats.length);
       } else {
         // API failed - fall back to localStorage
-        console.log('API unavailable, using localStorage. Result was:', result);
         this.loadFromLocalStorage();
       }
     } catch (error) {
@@ -87,7 +84,6 @@ const App = {
     SheetsAPI.cache.examHistory = this.state.examHistory;
     SheetsAPI.cache.settings = this.state.settings;
 
-    console.log('Final state - questionStats:', this.state.questionStats.length, 'examHistory:', this.state.examHistory.length);
     UI.hideLoading();
   },
 
@@ -96,12 +92,10 @@ const App = {
    */
   loadFromLocalStorage() {
     const localData = SheetsAPI.getLocalData('getAllData');
-    console.log('localStorage data:', localData);
     if (localData.success && localData.data) {
       this.state.questionStats = localData.data.questionStats || [];
       this.state.examHistory = localData.data.examHistory || [];
       this.state.settings = localData.data.settings || {};
-      console.log('Loaded from localStorage, questionStats count:', this.state.questionStats.length);
     }
   },
 
