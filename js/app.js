@@ -111,6 +111,9 @@ const App = {
       UI.toggleDarkMode(true);
     }
 
+    // Update dark mode button text
+    this.updateDarkModeButton();
+
     // Update settings UI if on settings screen
     UI.updateSettingsUI({
       weakThreshold: this.state.weakThreshold,
@@ -1029,6 +1032,25 @@ const App = {
     this.state.darkMode = enabled;
     UI.toggleDarkMode(enabled);
     localStorage.setItem('darkMode', enabled.toString());
+    this.updateDarkModeButton();
+  },
+
+  toggleDarkModeFromFooter() {
+    this.state.darkMode = !this.state.darkMode;
+    UI.toggleDarkMode(this.state.darkMode);
+    localStorage.setItem('darkMode', this.state.darkMode.toString());
+
+    // Sync checkbox in settings if present
+    const checkbox = document.getElementById('dark-mode-toggle');
+    if (checkbox) {
+      checkbox.checked = this.state.darkMode;
+    }
+
+    this.updateDarkModeButton();
+  },
+
+  updateDarkModeButton() {
+    // Icon changes automatically via CSS based on [data-theme]
   },
 
   /**

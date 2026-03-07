@@ -93,8 +93,8 @@ body {
 
 /* Header */
 .header {
-  background: var(--primary-blue);
-  color: var(--primary-white);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   padding: var(--spacing-md);
   position: sticky;
   top: 0;
@@ -136,9 +136,9 @@ body {
 }
 
 .nav-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: var(--primary-white);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -148,11 +148,15 @@ body {
 }
 
 .nav-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--primary-blue);
+  color: white;
+  border-color: var(--primary-blue);
 }
 
 .nav-btn.active {
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--primary-blue);
+  color: white;
+  border-color: var(--primary-blue);
 }
 
 /* Main Content */
@@ -1008,6 +1012,7 @@ body {
   text-align: center;
   border-top: 1px solid var(--border-color);
   margin-top: auto;
+  position: relative;
 }
 
 .footer p {
@@ -1017,6 +1022,37 @@ body {
 
 .footer .small {
   margin-top: var(--spacing-xs);
+}
+
+.dark-mode-icon-btn {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+}
+
+.dark-mode-icon-btn::before {
+  content: '\263E';  /* Moon symbol */
+}
+
+[data-theme="dark"] .dark-mode-icon-btn::before {
+  content: '\2600';  /* Sun symbol */
+  color: #fbbf24;  /* Yellow sun */
+}
+
+.dark-mode-icon-btn:hover {
+  background: var(--bg-secondary);
 }
 
 /* Loading Overlay */
