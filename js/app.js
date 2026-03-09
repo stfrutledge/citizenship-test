@@ -219,6 +219,17 @@ const App = {
   },
 
   // ==================
+  // Writing Test Mode
+  // ==================
+
+  /**
+   * Start writing test mode
+   */
+  startWritingTest() {
+    this.showScreen('writing');
+  },
+
+  // ==================
   // Study Mode
   // ==================
 

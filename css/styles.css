@@ -1203,3 +1203,308 @@ select:focus-visible {
     display: block !important;
   }
 }
+
+/* ==================
+   Writing Test Styles
+   ================== */
+
+.writing-header {
+  margin-bottom: var(--spacing-lg);
+}
+
+.writing-intro {
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.writing-info-card {
+  background: var(--bg-card);
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  margin-bottom: var(--spacing-xl);
+  text-align: left;
+}
+
+.writing-info-card h3 {
+  margin-bottom: var(--spacing-md);
+  color: var(--primary-blue);
+}
+
+.writing-info-card ul {
+  margin: var(--spacing-md) 0;
+  padding-left: var(--spacing-xl);
+}
+
+.writing-info-card li {
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-secondary);
+}
+
+.writing-settings {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-md);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.writing-settings label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.writing-settings input[type="range"] {
+  width: 120px;
+}
+
+.writing-settings span {
+  font-size: 0.875rem;
+  font-weight: 500;
+  min-width: 3rem;
+}
+
+/* Writing Progress */
+.writing-progress {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.progress-dots {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.progress-dot {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: all var(--transition-normal);
+}
+
+.progress-dot.active {
+  border-color: var(--primary-blue);
+  background: rgba(26, 54, 93, 0.1);
+  color: var(--primary-blue);
+}
+
+.progress-dot.correct {
+  border-color: var(--success);
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.progress-dot.incorrect {
+  border-color: var(--error);
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+.progress-text {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+/* Dictation Card */
+.dictation-card {
+  background: var(--bg-card);
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.play-section {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.play-btn {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--primary-blue);
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-bottom: var(--spacing-md);
+}
+
+.play-btn:hover:not(:disabled) {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+.play-btn:disabled {
+  background: var(--bg-secondary);
+  cursor: not-allowed;
+}
+
+.play-icon {
+  font-size: 2rem;
+  color: white;
+}
+
+.play-btn:disabled .play-icon {
+  color: var(--text-muted);
+}
+
+.play-instruction {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.plays-remaining {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Writing Input Section */
+.writing-input-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.writing-input-section label {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.writing-test-input {
+  width: 100%;
+  padding: var(--spacing-md);
+  font-size: 1.125rem;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast);
+}
+
+.writing-test-input:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+}
+
+.writing-test-input:disabled {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+}
+
+.writing-test-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Writing Actions */
+.writing-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.writing-actions button {
+  flex: 1;
+}
+
+/* Correct Answer Display */
+.correct-answer-display {
+  background: var(--bg-secondary);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  margin-top: var(--spacing-md);
+  font-size: 0.875rem;
+}
+
+/* Writing Review */
+.writing-review {
+  text-align: left;
+  margin-bottom: var(--spacing-xl);
+}
+
+.writing-review h3 {
+  margin-bottom: var(--spacing-md);
+}
+
+.review-list {
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.review-item {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+}
+
+.review-item.correct {
+  border-color: var(--success);
+  background: var(--success-bg);
+}
+
+.review-item.incorrect {
+  border-color: var(--error);
+  background: var(--error-bg);
+}
+
+.review-icon {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.review-item.correct .review-icon {
+  color: var(--success);
+}
+
+.review-item.incorrect .review-icon {
+  color: var(--error);
+}
+
+.review-content {
+  flex: 1;
+}
+
+.review-sentence {
+  margin-bottom: var(--spacing-xs);
+  font-size: 0.875rem;
+}
+
+.review-answer {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Dark mode adjustments for writing test */
+[data-theme="dark"] .play-btn {
+  background: var(--primary-blue);
+}
+
+[data-theme="dark"] .progress-dot.active {
+  background: rgba(99, 179, 237, 0.2);
+}
+
+[data-theme="dark"] .review-item.correct {
+  background: rgba(39, 103, 73, 0.3);
+}
+
+[data-theme="dark"] .review-item.incorrect {
+  background: rgba(155, 44, 44, 0.3);
+}
