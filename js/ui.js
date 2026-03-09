@@ -92,11 +92,9 @@ const UI = {
   updateHomeStats(stats) {
     const totalPracticed = document.getElementById('home-total-practiced');
     const accuracy = document.getElementById('home-accuracy');
-    const examsPassed = document.getElementById('home-exams-passed');
 
     if (totalPracticed) totalPracticed.textContent = `${stats.questionsPracticedToday || 0}/100`;
     if (accuracy) accuracy.textContent = `${(stats.accuracy || 0).toFixed(0)}%`;
-    if (examsPassed) examsPassed.textContent = stats.examsPassed || 0;
   },
 
   /**
