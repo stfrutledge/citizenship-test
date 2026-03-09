@@ -394,6 +394,7 @@ const App = {
    */
   checkTypedAnswer() {
     const input = document.getElementById('typed-answer-input');
+    const checkBtn = document.getElementById('study-check-btn');
     const userAnswer = input?.value.trim();
 
     if (!userAnswer) return;
@@ -411,6 +412,12 @@ const App = {
     if (input) {
       input.disabled = true;
       input.blur();
+    }
+
+    // Transform Check Answer button to Next Question
+    if (checkBtn) {
+      checkBtn.textContent = 'Next Question';
+      checkBtn.onclick = () => App.nextQuestion();
     }
 
     // Update local stats
@@ -655,14 +662,6 @@ const App = {
     }
 
     return matrix[str1.length][str2.length] <= maxDistance;
-  },
-
-  /**
-   * Show correct answer
-   */
-  showAnswer() {
-    const question = this.state.studyQuestions[this.state.currentQuestionIndex];
-    UI.showFeedback(true, question.answers);
   },
 
   /**

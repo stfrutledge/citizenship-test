@@ -179,6 +179,13 @@ const UI = {
       input.disabled = false;
       input.value = '';
       input.focus();
+
+      // Reset check button
+      const checkBtn = document.getElementById('study-check-btn');
+      if (checkBtn) {
+        checkBtn.textContent = 'Check Answer';
+        checkBtn.onclick = () => App.checkTypedAnswer();
+      }
     }
   },
 

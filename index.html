@@ -136,7 +136,7 @@
 
             <div id="typed-answer-container" class="answer-container" style="display: none;">
               <input type="text" id="typed-answer-input" class="typed-answer-input" placeholder="Type your answer..." spellcheck="true">
-              <button class="submit-btn" onclick="App.checkTypedAnswer()">Check Answer</button>
+              <button id="study-check-btn" class="submit-btn" onclick="App.checkTypedAnswer()">Check Answer</button>
             </div>
 
             <div id="answer-feedback" class="feedback" style="display: none;">
@@ -147,8 +147,6 @@
 
             <div class="question-nav">
               <button class="nav-prev" onclick="App.previousQuestion()">← Previous</button>
-              <button class="btn-secondary shuffle-inline-btn" onclick="App.shuffleAndContinue()">Shuffle</button>
-              <button class="show-answer-btn" onclick="App.showAnswer()">Show Answer</button>
               <button class="nav-next" onclick="App.nextQuestion()">Next →</button>
             </div>
           </div>
