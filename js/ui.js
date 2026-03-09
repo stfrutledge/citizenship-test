@@ -591,6 +591,12 @@ const UI = {
       weakThreshold.value = settings.weakThreshold || '70';
     }
 
+    // 65/20 mode
+    const age65Mode = document.getElementById('age-65-mode');
+    if (age65Mode) {
+      age65Mode.checked = settings.age65Mode === 'true' || settings.age65Mode === true;
+    }
+
     // Dark mode
     const darkModeToggle = document.getElementById('dark-mode-toggle');
     if (darkModeToggle) {

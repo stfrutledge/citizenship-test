@@ -12,6 +12,7 @@ const App = {
     answerMode: 'typed', // typed answers only
     weakThreshold: 70,
     darkMode: false,
+    age65Mode: false,
 
     // Study mode state
     studyQuestions: [],
@@ -120,13 +121,20 @@ const App = {
       UI.toggleDarkMode(true);
     }
 
+    // 65/20 mode (from localStorage)
+    const age65Mode = localStorage.getItem('age65Mode');
+    if (age65Mode === 'true') {
+      this.state.age65Mode = true;
+    }
+
     // Update dark mode button text
     this.updateDarkModeButton();
 
     // Update settings UI if on settings screen
     UI.updateSettingsUI({
       weakThreshold: this.state.weakThreshold,
-      darkMode: this.state.darkMode
+      darkMode: this.state.darkMode,
+      age65Mode: this.state.age65Mode
     });
   },
 
@@ -213,7 +221,8 @@ const App = {
       UI.updateSettingsUI({
         answerMode: this.state.answerMode,
         weakThreshold: this.state.weakThreshold,
-        darkMode: this.state.darkMode
+        darkMode: this.state.darkMode,
+        age65Mode: this.state.age65Mode
       });
     }
   },
@@ -236,7 +245,9 @@ const App = {
   /**
    * Start study mode
    */
-  startStudyMode(filter = 'all') {
+  startStudyMode() {
+    // Use 65/20 questions if age65Mode is enabled
+    const filter = this.state.age65Mode ? '65_20' : 'all';
     this.state.studyFilter = filter;
 
     let questions = [...QUESTIONS];
@@ -1043,6 +1054,17 @@ const App = {
 
     // Save to storage
     SheetsAPI.updateSetting(key, value);
+  },
+
+  /**
+   * Toggle 65/20 mode
+   */
+  toggleAge65Mode() {
+    const checkbox = document.getElementById('age-65-mode');
+    const enabled = checkbox?.checked || false;
+
+    this.state.age65Mode = enabled;
+    localStorage.setItem('age65Mode', enabled.toString());
   },
 
   /**

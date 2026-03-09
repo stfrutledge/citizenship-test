@@ -69,11 +69,6 @@
               <h4>Weak Areas</h4>
               <p>Focus on questions you've struggled with</p>
             </div>
-            <div class="mode-card" onclick="App.startStudyMode('65_20')">
-              <div class="mode-icon">⭐</div>
-              <h4>65/20 Questions</h4>
-              <p>Study the 20 questions for 65+ applicants</p>
-            </div>
             <div class="mode-card" onclick="App.startWritingTest()">
               <div class="mode-icon">✍️</div>
               <h4>Writing Test</h4>
@@ -428,6 +423,17 @@
         <div class="settings-header">
           <button class="back-btn" onclick="App.showScreen('home')">← Back</button>
           <h2>Settings</h2>
+        </div>
+
+        <div class="settings-section">
+          <h3>Study Mode</h3>
+          <div class="setting-option">
+            <label>
+              <input type="checkbox" id="age-65-mode" onchange="App.toggleAge65Mode()">
+              65/20 Mode (I am 65 or older with 20+ years as a permanent resident)
+            </label>
+            <p class="setting-note">When enabled, Study Mode will only show the 20 questions designated for applicants 65 years or older.</p>
+          </div>
         </div>
 
         <div class="settings-section">
