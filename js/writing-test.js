@@ -49,6 +49,8 @@ const WritingTest = {
     isSpeaking: false
   },
 
+  enterHandlerBound: false,
+
   // Speech synthesis
   synth: window.speechSynthesis,
   voices: [],
@@ -101,12 +103,40 @@ const WritingTest = {
         }
       });
 
-      // Enter key to submit
-      input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && input.value.trim() !== '' && !checkBtn.disabled) {
-          this.checkAnswer();
-        }
-      });
+    }
+
+    if (!this.enterHandlerBound) {
+      document.addEventListener('keydown', (e) => this.handleEnterKey(e));
+      this.enterHandlerBound = true;
+    }
+  },
+
+  handleEnterKey(e) {
+    if (e.key !== 'Enter') return;
+
+    const writingScreen = document.getElementById('screen-writing');
+    const testArea = document.getElementById('writing-test-area');
+    const results = document.getElementById('writing-results');
+    const input = document.getElementById('writing-input');
+    const checkBtn = document.getElementById('writing-check-btn');
+
+    if (!writingScreen || !writingScreen.classList.contains('active')) return;
+    if (!testArea || testArea.style.display === 'none') return;
+    if (results && results.style.display !== 'none') return;
+
+    e.preventDefault();
+
+    if (input && input.disabled) {
+      if (this.state.currentIndex < 2) {
+        this.next();
+      } else {
+        this.showResults();
+      }
+      return;
+    }
+
+    if (input && input.value.trim() !== '' && checkBtn && !checkBtn.disabled) {
+      this.checkAnswer();
     }
   },
 
@@ -133,6 +163,7 @@ const WritingTest = {
    * Reset UI for a new sentence
    */
   resetSentenceUI() {
+    this.synth.cancel();
     this.state.playsRemaining = 3;
     this.state.isSpeaking = false;
 
@@ -174,6 +205,8 @@ const WritingTest = {
       feedback.style.display = 'none';
       feedback.classList.remove('correct', 'incorrect');
     }
+
+    window.setTimeout(() => this.playSentence(), 150);
   },
 
   /**
