@@ -320,6 +320,7 @@ const WritingTest = {
         checkBtn.textContent = 'See Results';
         checkBtn.onclick = () => WritingTest.showResults();
       }
+      checkBtn.focus();
     }
   },
 
