@@ -1161,7 +1161,11 @@ const App = {
    * Start weak areas mode
    */
   startWeakAreasMode() {
-    const weakQuestions = SheetsAPI.getWeakQuestions(this.state.weakThreshold);
+    // Get question IDs for the current test version
+    const questions = this.getQuestions();
+    const questionIds = questions.map(q => q.id);
+
+    const weakQuestions = SheetsAPI.getWeakQuestions(this.state.weakThreshold, questionIds);
     this.state.weakQuestions = weakQuestions;
     this.state.weakCurrentIndex = 0;
 

@@ -488,14 +488,19 @@ const SheetsAPI = {
 
   /**
    * Get weak questions (below threshold accuracy)
+   * @param {number} threshold - Accuracy threshold (default 70%)
+   * @param {Array} questionIds - Array of question IDs to check (default 1-100 for 2008 test)
    */
-  getWeakQuestions(threshold = 70) {
+  getWeakQuestions(threshold = 70, questionIds = null) {
     const stats = this.cache.questionStats ||
                   JSON.parse(localStorage.getItem('questionStats') || '[]');
 
+    // Default to 2008 test (1-100) if no IDs provided
+    const idsToCheck = questionIds || Array.from({ length: 100 }, (_, i) => i + 1);
+
     const weakQuestions = [];
 
-    for (let i = 1; i <= 100; i++) {
+    for (const i of idsToCheck) {
       const stat = stats.find(s => s.questionId === i);
 
       // Only include questions that have been practiced
