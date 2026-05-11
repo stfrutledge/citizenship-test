@@ -631,14 +631,20 @@ const App = {
         return true;
       }
 
-      // Check if key numbers match (e.g., "18" in both answers)
+      // Check if user entered a number that appears in the acceptable answer
+      // e.g., "435" should match "Four hundred thirty-five (435)"
       const userNumbers = normalizedUser.match(/\d+/g) || [];
       const acceptableNumbers = normalizedAcceptable.match(/\d+/g) || [];
       if (userNumbers.length > 0 && acceptableNumbers.length > 0) {
+        // If user typed just a number and it matches a number in the answer, accept it
+        const isJustNumber = /^\d+$/.test(normalizedUser.trim());
         const hasMatchingNumber = userNumbers.some(n => acceptableNumbers.includes(n));
+        if (isJustNumber && hasMatchingNumber) {
+          return true;
+        }
+        // Also check for age/years context
         if (hasMatchingNumber) {
-          // Numbers match - check for context similarity (age, years, etc.)
-          const ageContext = ['age', 'years', 'old', 'eighteen', 'eighteen'];
+          const ageContext = ['age', 'years', 'old', 'eighteen'];
           const hasAgeContext = ageContext.some(word =>
             normalizedUser.includes(word) || normalizedAcceptable.includes(word)
           );
