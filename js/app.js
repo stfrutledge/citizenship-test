@@ -666,6 +666,30 @@ const App = {
         return true;
       }
 
+      // Check word-by-word matching with fuzzy tolerance for typos
+      const userWords = normalizedUser.split(' ').filter(w => w.length > 2);
+      const acceptableWords = normalizedAcceptable.split(' ').filter(w => w.length > 2);
+      if (userWords.length >= 2 && acceptableWords.length >= 2) {
+        let matchedWords = 0;
+        for (const userWord of userWords) {
+          for (const acceptWord of acceptableWords) {
+            // Exact match or fuzzy match for longer words
+            if (userWord === acceptWord) {
+              matchedWords++;
+              break;
+            } else if (userWord.length >= 5 && acceptWord.length >= 5 &&
+                       this.fuzzyMatch(userWord, acceptWord, 3)) {
+              matchedWords++;
+              break;
+            }
+          }
+        }
+        // If 60%+ of user's words match, accept it
+        if (matchedWords / userWords.length >= 0.6) {
+          return true;
+        }
+      }
+
       // Check for equivalent locations (e.g., "New York" = "World Trade Center")
       const locationEquivalents = [
         [['new york', 'nyc'], ['world trade center', 'wtc']],
@@ -725,6 +749,7 @@ const App = {
       'executive': ['executive', 'president'],
       'legislative': ['legislative', 'congress', 'legislature'],
       // Actions/concepts
+      'wrote': ['wrote', 'write', 'writing', 'written', 'author', 'authored'],
       'represent': ['represent', 'represents', 'representing', 'representation', 'stands for', 'symbolize', 'symbolizes'],
       'protect': ['protect', 'protects', 'protecting', 'protection', 'defend', 'defends'],
       'resolve': ['resolve', 'resolves', 'resolving', 'resolution', 'settle', 'settles', 'decide', 'decides'],
