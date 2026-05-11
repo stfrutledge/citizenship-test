@@ -752,6 +752,7 @@ const App = {
       'wrote': ['wrote', 'write', 'writing', 'written', 'author', 'authored'],
       'declare': ['declare', 'declares', 'declared', 'declaring', 'declaration'],
       'make': ['make', 'makes', 'made', 'making'],
+      'assassinated': ['assassinated', 'assassination', 'assassinate', 'killed', 'murder', 'murdered'],
       'represent': ['represent', 'represents', 'representing', 'representation', 'stands for', 'symbolize', 'symbolizes'],
       'protect': ['protect', 'protects', 'protecting', 'protection', 'defend', 'defends'],
       'resolve': ['resolve', 'resolves', 'resolving', 'resolution', 'settle', 'settles', 'decide', 'decides'],
