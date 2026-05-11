@@ -167,6 +167,9 @@ const UI = {
     }
 
     document.getElementById('practice-q-num').textContent = question.id;
+    // Update total based on current test version
+    const totalQuestions = typeof App !== 'undefined' && App.state.testVersion === '2025' ? 128 : 100;
+    document.getElementById('practice-q-total').textContent = totalQuestions;
     document.getElementById('practice-q-category').textContent = question.subcategory;
     document.getElementById('practice-q-text').textContent = question.question;
 
