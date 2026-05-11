@@ -98,6 +98,12 @@ const App = {
       totalPracticed.textContent = `${currentCount}/${questionCount}`;
     }
 
+    // Update study mode question total display
+    const practiceTotal = document.getElementById('practice-q-total');
+    if (practiceTotal) {
+      practiceTotal.textContent = version === '2025' ? '128' : '100';
+    }
+
     // Update category filter options
     const categoryFilter = document.getElementById('category-filter');
     if (categoryFilter) {
