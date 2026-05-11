@@ -100,12 +100,13 @@ const UI = {
   /**
    * Render questions list
    */
-  renderQuestionsList(questions, stats) {
+  renderQuestionsList(questions, stats, version = '2008') {
     const container = document.getElementById('questions-list');
     if (!container) return;
 
     container.innerHTML = questions.map(q => {
-      const stat = stats.find(s => s.questionId === q.id) || {};
+      const versionedId = `${version}-${q.id}`;
+      const stat = stats.find(s => s.questionId === versionedId) || {};
       // successRate may be decimal (0-1) or percentage (0-100) depending on source
       let accuracy = stat.timesAsked > 0 ? stat.successRate : null;
       // Convert decimal to percentage if needed

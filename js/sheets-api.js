@@ -237,16 +237,19 @@ const SheetsAPI = {
    * Record an answer for a question
    */
   async recordAnswer(questionId, correct, version = '2008') {
+    // Use version-prefixed ID to keep 2008 and 2025 stats separate
+    const versionedId = `${version}-${questionId}`;
+
     const result = await this.makePostRequest({
       action: 'recordAnswer',
-      questionId: questionId,
+      questionId: versionedId,
       correct: correct,
       version: version
     });
 
     // Update local cache
     if (result.success && this.cache.questionStats) {
-      const statIndex = this.cache.questionStats.findIndex(s => s.questionId === questionId);
+      const statIndex = this.cache.questionStats.findIndex(s => s.questionId === versionedId);
       if (statIndex >= 0) {
         this.cache.questionStats[statIndex] = result.data;
       }
@@ -465,9 +468,11 @@ const SheetsAPI = {
   /**
    * Get stats for a specific question
    */
-  getQuestionStat(questionId) {
+  getQuestionStat(questionId, version = '2008') {
+    const versionedId = `${version}-${questionId}`;
+
     if (this.cache.questionStats) {
-      return this.cache.questionStats.find(s => s.questionId === questionId) || {
+      return this.cache.questionStats.find(s => s.questionId === versionedId) || {
         questionId: questionId,
         timesAsked: 0,
         timesCorrect: 0,
@@ -477,7 +482,7 @@ const SheetsAPI = {
     }
 
     const stats = JSON.parse(localStorage.getItem('questionStats') || '[]');
-    return stats.find(s => s.questionId === questionId) || {
+    return stats.find(s => s.questionId === versionedId) || {
       questionId: questionId,
       timesAsked: 0,
       timesCorrect: 0,
@@ -490,8 +495,9 @@ const SheetsAPI = {
    * Get weak questions (below threshold accuracy)
    * @param {number} threshold - Accuracy threshold (default 70%)
    * @param {Array} questionIds - Array of question IDs to check (default 1-100 for 2008 test)
+   * @param {string} version - Test version ('2008' or '2025')
    */
-  getWeakQuestions(threshold = 70, questionIds = null) {
+  getWeakQuestions(threshold = 70, questionIds = null, version = '2008') {
     const stats = this.cache.questionStats ||
                   JSON.parse(localStorage.getItem('questionStats') || '[]');
 
@@ -501,7 +507,8 @@ const SheetsAPI = {
     const weakQuestions = [];
 
     for (const i of idsToCheck) {
-      const stat = stats.find(s => s.questionId === i);
+      const versionedId = `${version}-${i}`;
+      const stat = stats.find(s => s.questionId === versionedId);
 
       // Only include questions that have been practiced
       if (stat && stat.timesAsked > 0) {

@@ -360,7 +360,7 @@ const App = {
     }
 
     this.state.studyQuestions = questions;
-    UI.renderQuestionsList(questions, this.state.questionStats);
+    UI.renderQuestionsList(questions, this.state.questionStats, this.state.testVersion);
     UI.showQuestionsList();
     this.showScreen('study');
     UI.updateAnswerModeToggle(this.state.answerMode);
@@ -373,6 +373,7 @@ const App = {
     const categoryFilter = document.getElementById('category-filter')?.value || 'all';
     const statusFilter = document.getElementById('status-filter')?.value || 'all';
     const sortOrder = document.getElementById('sort-order')?.value || 'default';
+    const version = this.state.testVersion;
 
     let questions = [...this.getQuestions()];
 
@@ -386,7 +387,8 @@ const App = {
       const stats = this.state.questionStats;
 
       questions = questions.filter(q => {
-        const stat = stats.find(s => s.questionId === q.id);
+        const versionedId = `${version}-${q.id}`;
+        const stat = stats.find(s => s.questionId === versionedId);
 
         // Convert successRate to percentage if stored as decimal
         let successRate = stat?.successRate || 0;
@@ -412,8 +414,10 @@ const App = {
       const stats = this.state.questionStats;
 
       questions.sort((a, b) => {
-        const statA = stats.find(s => s.questionId === a.id);
-        const statB = stats.find(s => s.questionId === b.id);
+        const versionedIdA = `${version}-${a.id}`;
+        const versionedIdB = `${version}-${b.id}`;
+        const statA = stats.find(s => s.questionId === versionedIdA);
+        const statB = stats.find(s => s.questionId === versionedIdB);
 
         // Get success rates, converting from decimal if needed
         let rateA = statA?.successRate || 0;
@@ -439,7 +443,7 @@ const App = {
 
     this.state.studyQuestions = questions;
     this.state.currentQuestionIndex = 0;
-    UI.renderQuestionsList(questions, this.state.questionStats);
+    UI.renderQuestionsList(questions, this.state.questionStats, this.state.testVersion);
     UI.showQuestionsList();
   },
 
@@ -454,7 +458,7 @@ const App = {
       [questions[i], questions[j]] = [questions[j], questions[i]];
     }
     this.state.studyQuestions = questions;
-    UI.renderQuestionsList(questions, this.state.questionStats);
+    UI.renderQuestionsList(questions, this.state.questionStats, this.state.testVersion);
   },
 
   /**
@@ -599,8 +603,9 @@ const App = {
       checkBtn.onclick = () => App.nextQuestion();
     }
 
-    // Update local stats
-    const statIndex = this.state.questionStats.findIndex(s => s.questionId === question.id);
+    // Update local stats with versioned ID
+    const versionedId = `${this.state.testVersion}-${question.id}`;
+    let statIndex = this.state.questionStats.findIndex(s => s.questionId === versionedId);
     if (statIndex >= 0) {
       this.state.questionStats[statIndex].timesAsked++;
       if (isCorrect) {
@@ -609,6 +614,15 @@ const App = {
       this.state.questionStats[statIndex].successRate =
         (this.state.questionStats[statIndex].timesCorrect /
          this.state.questionStats[statIndex].timesAsked) * 100;
+    } else {
+      // Create new stat entry for this question
+      this.state.questionStats.push({
+        questionId: versionedId,
+        timesAsked: 1,
+        timesCorrect: isCorrect ? 1 : 0,
+        lastAsked: new Date().toISOString(),
+        successRate: isCorrect ? 100 : 0
+      });
     }
   },
 
@@ -1165,7 +1179,7 @@ const App = {
     const questions = this.getQuestions();
     const questionIds = questions.map(q => q.id);
 
-    const weakQuestions = SheetsAPI.getWeakQuestions(this.state.weakThreshold, questionIds);
+    const weakQuestions = SheetsAPI.getWeakQuestions(this.state.weakThreshold, questionIds, this.state.testVersion);
     this.state.weakQuestions = weakQuestions;
     this.state.weakCurrentIndex = 0;
 
