@@ -671,6 +671,43 @@ body {
   transition: width var(--transition-normal);
 }
 
+/* Study Mode Progress */
+.study-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.study-progress span {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.study-progress .progress-bar {
+  flex: 1;
+  margin-top: 0;
+}
+
+.session-score {
+  display: flex;
+  gap: var(--spacing-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.score-correct {
+  color: var(--success);
+}
+
+.score-incorrect {
+  color: var(--error);
+}
+
 /* Exam Results */
 .results-container {
   max-width: 500px;

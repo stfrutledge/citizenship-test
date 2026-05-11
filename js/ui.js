@@ -144,12 +144,27 @@ const UI = {
   /**
    * Render a question for practice
    */
-  renderQuestion(question, mode = 'typed') {
+  renderQuestion(question, mode = 'typed', progress = null) {
     const questionsList = document.getElementById('questions-list');
     const questionPractice = document.getElementById('question-practice');
+    const studyProgress = document.getElementById('study-progress');
 
     if (questionsList) questionsList.style.display = 'none';
     if (questionPractice) questionPractice.style.display = 'block';
+
+    // Show/hide and update progress bar
+    if (studyProgress) {
+      if (progress) {
+        studyProgress.style.display = 'flex';
+        document.getElementById('study-current').textContent = progress.current;
+        document.getElementById('study-total').textContent = progress.total;
+        document.getElementById('study-progress-fill').style.width = `${(progress.current / progress.total) * 100}%`;
+        document.getElementById('session-correct').textContent = progress.correct || 0;
+        document.getElementById('session-incorrect').textContent = progress.incorrect || 0;
+      } else {
+        studyProgress.style.display = 'none';
+      }
+    }
 
     document.getElementById('practice-q-num').textContent = question.id;
     document.getElementById('practice-q-category').textContent = question.subcategory;
@@ -338,9 +353,22 @@ const UI = {
   showQuestionsList() {
     const questionsList = document.getElementById('questions-list');
     const questionPractice = document.getElementById('question-practice');
+    const studyProgress = document.getElementById('study-progress');
 
     if (questionsList) questionsList.style.display = 'grid';
     if (questionPractice) questionPractice.style.display = 'none';
+    if (studyProgress) studyProgress.style.display = 'none';
+  },
+
+  /**
+   * Update study session score display
+   */
+  updateStudySessionScore(correct, incorrect) {
+    const correctEl = document.getElementById('session-correct');
+    const incorrectEl = document.getElementById('session-incorrect');
+
+    if (correctEl) correctEl.textContent = correct;
+    if (incorrectEl) incorrectEl.textContent = incorrect;
   },
 
   /**

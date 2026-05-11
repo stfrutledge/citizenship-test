@@ -18,6 +18,9 @@ const App = {
     studyQuestions: [],
     currentQuestionIndex: 0,
     studyFilter: 'all',
+    studyOneAtATime: false,
+    studySessionCorrect: 0,
+    studySessionIncorrect: 0,
 
     // Exam mode state
     examQuestions: [],
@@ -270,6 +273,7 @@ const App = {
   filterQuestions() {
     const categoryFilter = document.getElementById('category-filter')?.value || 'all';
     const statusFilter = document.getElementById('status-filter')?.value || 'all';
+    const sortOrder = document.getElementById('sort-order')?.value || 'default';
 
     let questions = [...QUESTIONS];
 
@@ -285,15 +289,51 @@ const App = {
       questions = questions.filter(q => {
         const stat = stats.find(s => s.questionId === q.id);
 
+        // Convert successRate to percentage if stored as decimal
+        let successRate = stat?.successRate || 0;
+        if (successRate > 0 && successRate <= 1) {
+          successRate = successRate * 100;
+        }
+
         switch (statusFilter) {
           case 'not-practiced':
             return !stat || stat.timesAsked === 0;
           case 'weak':
-            return stat && stat.timesAsked > 0 && stat.successRate < this.state.weakThreshold;
+            return stat && stat.timesAsked > 0 && successRate < this.state.weakThreshold;
           case 'strong':
-            return stat && stat.timesAsked > 0 && stat.successRate >= this.state.weakThreshold;
+            return stat && stat.timesAsked > 0 && successRate >= this.state.weakThreshold;
           default:
             return true;
+        }
+      });
+    }
+
+    // Sort questions
+    if (sortOrder !== 'default') {
+      const stats = this.state.questionStats;
+
+      questions.sort((a, b) => {
+        const statA = stats.find(s => s.questionId === a.id);
+        const statB = stats.find(s => s.questionId === b.id);
+
+        // Get success rates, converting from decimal if needed
+        let rateA = statA?.successRate || 0;
+        let rateB = statB?.successRate || 0;
+        if (rateA > 0 && rateA <= 1) rateA = rateA * 100;
+        if (rateB > 0 && rateB <= 1) rateB = rateB * 100;
+
+        // Unpracticed questions go to the end for "strongest first", beginning for "weakest first"
+        const practicedA = statA && statA.timesAsked > 0;
+        const practicedB = statB && statB.timesAsked > 0;
+
+        if (!practicedA && !practicedB) return a.id - b.id;
+        if (!practicedA) return sortOrder === 'weakest' ? -1 : 1;
+        if (!practicedB) return sortOrder === 'weakest' ? 1 : -1;
+
+        if (sortOrder === 'weakest') {
+          return rateA - rateB;
+        } else {
+          return rateB - rateA;
         }
       });
     }
@@ -326,8 +366,17 @@ const App = {
       return;
     }
     this.state.currentQuestionIndex = 0;
+    this.state.studyOneAtATime = true;
+    this.state.studySessionCorrect = 0;
+    this.state.studySessionIncorrect = 0;
     const question = this.state.studyQuestions[0];
-    UI.renderQuestion(question, this.state.answerMode);
+    const progress = {
+      current: 1,
+      total: this.state.studyQuestions.length,
+      correct: 0,
+      incorrect: 0
+    };
+    UI.renderQuestion(question, this.state.answerMode, progress);
   },
 
   /**
@@ -350,8 +399,15 @@ const App = {
     ];
 
     // Show the current (now shuffled) question
+    this.state.studyOneAtATime = true;
     const question = this.state.studyQuestions[this.state.currentQuestionIndex];
-    UI.renderQuestion(question, this.state.answerMode);
+    const progress = {
+      current: this.state.currentQuestionIndex + 1,
+      total: this.state.studyQuestions.length,
+      correct: this.state.studySessionCorrect,
+      incorrect: this.state.studySessionIncorrect
+    };
+    UI.renderQuestion(question, this.state.answerMode, progress);
   },
 
   /**
@@ -370,8 +426,9 @@ const App = {
     if (index === -1) return;
 
     this.state.currentQuestionIndex = index;
+    this.state.studyOneAtATime = false;
     const question = this.state.studyQuestions[index];
-    UI.renderQuestion(question, this.state.answerMode);
+    UI.renderQuestion(question, this.state.answerMode, null);
   },
 
   /**
@@ -415,6 +472,18 @@ const App = {
 
     // Record answer
     SheetsAPI.recordAnswer(question.id, isCorrect);
+
+    // Update session score
+    if (isCorrect) {
+      this.state.studySessionCorrect++;
+    } else {
+      this.state.studySessionIncorrect++;
+    }
+
+    // Update session score display
+    if (this.state.studyOneAtATime) {
+      UI.updateStudySessionScore(this.state.studySessionCorrect, this.state.studySessionIncorrect);
+    }
 
     // Show feedback
     UI.showFeedback(isCorrect, question.answers);
@@ -682,7 +751,13 @@ const App = {
     if (this.state.currentQuestionIndex > 0) {
       this.state.currentQuestionIndex--;
       const question = this.state.studyQuestions[this.state.currentQuestionIndex];
-      UI.renderQuestion(question, this.state.answerMode);
+      const progress = this.state.studyOneAtATime ? {
+        current: this.state.currentQuestionIndex + 1,
+        total: this.state.studyQuestions.length,
+        correct: this.state.studySessionCorrect,
+        incorrect: this.state.studySessionIncorrect
+      } : null;
+      UI.renderQuestion(question, this.state.answerMode, progress);
     }
   },
 
@@ -693,9 +768,16 @@ const App = {
     if (this.state.currentQuestionIndex < this.state.studyQuestions.length - 1) {
       this.state.currentQuestionIndex++;
       const question = this.state.studyQuestions[this.state.currentQuestionIndex];
-      UI.renderQuestion(question, this.state.answerMode);
+      const progress = this.state.studyOneAtATime ? {
+        current: this.state.currentQuestionIndex + 1,
+        total: this.state.studyQuestions.length,
+        correct: this.state.studySessionCorrect,
+        incorrect: this.state.studySessionIncorrect
+      } : null;
+      UI.renderQuestion(question, this.state.answerMode, progress);
     } else {
       // End of questions - go back to list
+      this.state.studyOneAtATime = false;
       UI.renderQuestionsList(this.state.studyQuestions, this.state.questionStats);
       UI.showQuestionsList();
     }
@@ -903,9 +985,18 @@ const App = {
 
     this.state.studyQuestions = QUESTIONS.filter(q => missedIds.includes(q.id));
     this.state.currentQuestionIndex = 0;
+    this.state.studyOneAtATime = true;
+    this.state.studySessionCorrect = 0;
+    this.state.studySessionIncorrect = 0;
 
     this.showScreen('study');
-    UI.renderQuestion(this.state.studyQuestions[0], this.state.answerMode);
+    const progress = {
+      current: 1,
+      total: this.state.studyQuestions.length,
+      correct: 0,
+      incorrect: 0
+    };
+    UI.renderQuestion(this.state.studyQuestions[0], this.state.answerMode, progress);
   },
 
   // ==================

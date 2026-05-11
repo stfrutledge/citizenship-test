@@ -98,6 +98,11 @@
               <option value="weak">Weak Areas (&lt;70%)</option>
               <option value="strong">Strong (&gt;70%)</option>
             </select>
+            <select id="sort-order" onchange="App.filterQuestions()">
+              <option value="default">Sort: Question #</option>
+              <option value="weakest">Sort: Weakest First</option>
+              <option value="strongest">Sort: Strongest First</option>
+            </select>
           </div>
         </div>
 
@@ -113,6 +118,16 @@
         </div>
 
         <div class="question-practice" id="question-practice" style="display: none;">
+          <div class="study-progress" id="study-progress" style="display: none;">
+            <span>Question <span id="study-current">1</span> of <span id="study-total">100</span></span>
+            <div class="progress-bar">
+              <div class="progress-fill" id="study-progress-fill"></div>
+            </div>
+            <div class="session-score" id="session-score">
+              <span class="score-correct">✓ <span id="session-correct">0</span></span>
+              <span class="score-incorrect">✗ <span id="session-incorrect">0</span></span>
+            </div>
+          </div>
           <div class="question-card">
             <div class="question-meta">
               <span class="question-number">Question <span id="practice-q-num">1</span> of 100</span>
