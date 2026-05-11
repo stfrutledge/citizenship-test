@@ -548,12 +548,19 @@ const SheetsAPI = {
 
   /**
    * Get overall statistics
+   * @param {string} version - Test version to filter by ('2008' or '2025')
    */
-  getOverallStats() {
+  getOverallStats(version = '2008') {
     const stats = this.cache.questionStats ||
                   JSON.parse(localStorage.getItem('questionStats') || '[]');
     const history = this.cache.examHistory ||
                     JSON.parse(localStorage.getItem('examHistory') || '[]');
+
+    // Filter stats by version prefix
+    const versionPrefix = `${version}-`;
+    const versionStats = stats.filter(s =>
+      String(s.questionId).startsWith(versionPrefix)
+    );
 
     let totalAsked = 0;
     let totalCorrect = 0;
@@ -563,7 +570,7 @@ const SheetsAPI = {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    stats.forEach(stat => {
+    versionStats.forEach(stat => {
       totalAsked += stat.timesAsked || 0;
       totalCorrect += stat.timesCorrect || 0;
 
@@ -577,7 +584,9 @@ const SheetsAPI = {
       }
     });
 
-    const examsPassed = history.filter(e => e.passed).length;
+    // Filter exam history by version
+    const versionHistory = history.filter(e => e.version === version);
+    const examsPassed = versionHistory.filter(e => e.passed).length;
     const accuracy = totalAsked > 0 ? (totalCorrect / totalAsked) * 100 : 0;
 
     return {
@@ -592,20 +601,30 @@ const SheetsAPI = {
 
   /**
    * Get category statistics
+   * @param {string} version - Test version ('2008' or '2025')
    */
-  getCategoryStats() {
+  getCategoryStats(version = '2008') {
     const stats = this.cache.questionStats ||
                   JSON.parse(localStorage.getItem('questionStats') || '[]');
 
-    const categories = {
+    // Use different categories based on version
+    const categories = version === '2025' ? {
+      'American Government': { questions: [], timesAsked: 0, timesCorrect: 0 },
+      'American History': { questions: [], timesAsked: 0, timesCorrect: 0 },
+      'Symbols and Holidays': { questions: [], timesAsked: 0, timesCorrect: 0 }
+    } : {
       'American Government': { questions: [], timesAsked: 0, timesCorrect: 0 },
       'American History': { questions: [], timesAsked: 0, timesCorrect: 0 },
       'Integrated Civics': { questions: [], timesAsked: 0, timesCorrect: 0 }
     };
 
-    // Map question IDs to categories based on QUESTIONS data
-    QUESTIONS.forEach(q => {
-      const stat = stats.find(s => s.questionId === q.id);
+    // Use the correct questions array based on version
+    const questions = version === '2025' ? QUESTIONS_2025 : QUESTIONS;
+
+    // Map question IDs to categories based on questions data
+    questions.forEach(q => {
+      const versionedId = `${version}-${q.id}`;
+      const stat = stats.find(s => s.questionId === versionedId);
       if (categories[q.category]) {
         categories[q.category].questions.push(q.id);
         if (stat) {
@@ -626,16 +645,24 @@ const SheetsAPI = {
 
   /**
    * Get most missed questions
+   * @param {number} limit - Max number of questions to return
+   * @param {string} version - Test version ('2008' or '2025')
    */
-  getMostMissedQuestions(limit = 10) {
+  getMostMissedQuestions(limit = 10, version = '2008') {
     const stats = this.cache.questionStats ||
                   JSON.parse(localStorage.getItem('questionStats') || '[]');
 
+    // Filter by version prefix
+    const versionPrefix = `${version}-`;
+    const versionStats = stats.filter(s =>
+      String(s.questionId).startsWith(versionPrefix)
+    );
+
     // Calculate miss rate for each question
-    const missStats = stats
+    const missStats = versionStats
       .filter(s => s.timesAsked > 0)
       .map(s => ({
-        questionId: s.questionId,
+        questionId: s.questionId.replace(versionPrefix, ''), // Remove prefix for display
         timesMissed: s.timesAsked - s.timesCorrect,
         missRate: ((s.timesAsked - s.timesCorrect) / s.timesAsked) * 100,
         timesAsked: s.timesAsked

@@ -552,7 +552,7 @@ const UI = {
   /**
    * Render statistics page
    */
-  renderStats(overallStats, categoryStats, examHistory, mostMissed) {
+  renderStats(overallStats, categoryStats, examHistory, mostMissed, version = '2008') {
     // Overall stats
     document.getElementById('stats-total-asked').textContent = overallStats.totalAsked;
     document.getElementById('stats-total-correct').textContent = overallStats.totalCorrect;
@@ -603,8 +603,11 @@ const UI = {
       if (mostMissed.length === 0) {
         missedList.innerHTML = '<p class="text-muted">No missed questions yet</p>';
       } else {
+        // Use correct questions array based on version
+        const questions = version === '2025' ? QUESTIONS_2025 : QUESTIONS;
         missedList.innerHTML = mostMissed.map(m => {
-          const question = QUESTIONS.find(q => q.id === m.questionId);
+          const qId = parseInt(m.questionId) || m.questionId;
+          const question = questions.find(q => q.id === qId);
           return `
             <div class="missed-item">
               <span class="missed-item-number">Q${m.questionId}:</span>

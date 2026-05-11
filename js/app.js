@@ -304,7 +304,7 @@ const App = {
    * Update home screen statistics
    */
   updateHomeStats() {
-    const stats = SheetsAPI.getOverallStats();
+    const stats = SheetsAPI.getOverallStats(this.state.testVersion);
     const questionTotal = this.state.testVersion === '2025' ? 128 : 100;
     UI.updateHomeStats(stats, questionTotal);
   },
@@ -1287,12 +1287,13 @@ const App = {
    * Load statistics screen
    */
   loadStatsScreen() {
-    const overallStats = SheetsAPI.getOverallStats();
-    const categoryStats = SheetsAPI.getCategoryStats();
-    const examHistory = this.state.examHistory || [];
-    const mostMissed = SheetsAPI.getMostMissedQuestions();
+    const version = this.state.testVersion;
+    const overallStats = SheetsAPI.getOverallStats(version);
+    const categoryStats = SheetsAPI.getCategoryStats(version);
+    const examHistory = (this.state.examHistory || []).filter(e => e.version === version);
+    const mostMissed = SheetsAPI.getMostMissedQuestions(10, version);
 
-    UI.renderStats(overallStats, categoryStats, examHistory, mostMissed);
+    UI.renderStats(overallStats, categoryStats, examHistory, mostMissed, version);
   },
 
   // ==================
