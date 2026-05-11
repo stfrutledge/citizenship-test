@@ -13,6 +13,7 @@ const App = {
     weakThreshold: 70,
     darkMode: false,
     age65Mode: false,
+    testVersion: '2008', // '2008' or '2025'
 
     // Study mode state
     studyQuestions: [],
@@ -40,16 +41,107 @@ const App = {
   },
 
   /**
+   * Get the questions array for the current test version
+   */
+  getQuestions() {
+    return this.state.testVersion === '2025' ? QUESTIONS_2025 : QUESTIONS;
+  },
+
+  /**
+   * Get the 65/20 questions for the current test version
+   */
+  getQuestions65_20() {
+    return this.state.testVersion === '2025' ? QUESTIONS_2025_65_20 : QUESTIONS_65_20;
+  },
+
+  /**
+   * Set the test version (2008 or 2025)
+   */
+  setTestVersion(version) {
+    this.state.testVersion = version;
+    localStorage.setItem('testVersion', version);
+
+    // Update UI
+    document.getElementById('version-2008-btn')?.classList.toggle('active', version === '2008');
+    document.getElementById('version-2025-btn')?.classList.toggle('active', version === '2025');
+
+    // Update hero description
+    const heroDesc = document.getElementById('hero-description');
+    if (heroDesc) {
+      if (version === '2025') {
+        heroDesc.textContent = 'Practice all 128 civics questions from the 2025 USCIS test';
+      } else {
+        heroDesc.textContent = 'Practice all 100 civics questions from the official USCIS test';
+      }
+    }
+
+    // Update mode card descriptions
+    const studyModeDesc = document.getElementById('study-mode-desc');
+    const examModeDesc = document.getElementById('exam-mode-desc');
+    if (studyModeDesc) {
+      studyModeDesc.textContent = version === '2025'
+        ? 'Browse and practice all 128 civics questions by category'
+        : 'Browse and practice all 100 civics questions by category';
+    }
+    if (examModeDesc) {
+      examModeDesc.textContent = version === '2025'
+        ? 'Take a 20-question practice test (12/20 to pass)'
+        : 'Take a 10-question practice test (6/10 to pass)';
+    }
+
+    // Update home stats display total
+    const totalPracticed = document.getElementById('home-total-practiced');
+    if (totalPracticed) {
+      const questionCount = version === '2025' ? 128 : 100;
+      const currentText = totalPracticed.textContent;
+      const currentCount = currentText.split('/')[0] || '0';
+      totalPracticed.textContent = `${currentCount}/${questionCount}`;
+    }
+
+    // Update category filter options
+    const categoryFilter = document.getElementById('category-filter');
+    if (categoryFilter) {
+      if (version === '2025') {
+        categoryFilter.innerHTML = `
+          <option value="all">All Categories</option>
+          <option value="American Government">American Government</option>
+          <option value="American History">American History</option>
+          <option value="Symbols and Holidays">Symbols and Holidays</option>
+        `;
+      } else {
+        categoryFilter.innerHTML = `
+          <option value="all">All Categories</option>
+          <option value="American Government">American Government</option>
+          <option value="American History">American History</option>
+          <option value="Integrated Civics">Integrated Civics</option>
+        `;
+      }
+    }
+
+    // Update home stats for the selected version
+    this.updateHomeStats();
+  },
+
+  /**
    * Initialize the application
    */
   async init() {
     console.log('Initializing Citizenship Test App...');
+
+    // Load saved test version
+    const savedVersion = localStorage.getItem('testVersion');
+    if (savedVersion === '2025' || savedVersion === '2008') {
+      this.state.testVersion = savedVersion;
+    }
 
     // Load data
     await this.loadData();
 
     // Apply settings
     this.applySettings();
+
+    // Apply saved test version to UI
+    this.setTestVersion(this.state.testVersion);
 
     // Update home stats
     this.updateHomeStats();
@@ -207,7 +299,8 @@ const App = {
    */
   updateHomeStats() {
     const stats = SheetsAPI.getOverallStats();
-    UI.updateHomeStats(stats);
+    const questionTotal = this.state.testVersion === '2025' ? 128 : 100;
+    UI.updateHomeStats(stats, questionTotal);
   },
 
   /**
@@ -253,11 +346,11 @@ const App = {
     const filter = this.state.age65Mode ? '65_20' : 'all';
     this.state.studyFilter = filter;
 
-    let questions = [...QUESTIONS];
+    let questions = [...this.getQuestions()];
 
     // Apply filter
     if (filter === '65_20') {
-      questions = QUESTIONS_65_20;
+      questions = this.getQuestions65_20();
     }
 
     this.state.studyQuestions = questions;
@@ -275,7 +368,7 @@ const App = {
     const statusFilter = document.getElementById('status-filter')?.value || 'all';
     const sortOrder = document.getElementById('sort-order')?.value || 'default';
 
-    let questions = [...QUESTIONS];
+    let questions = [...this.getQuestions()];
 
     // Category filter
     if (categoryFilter !== 'all') {
@@ -470,8 +563,8 @@ const App = {
     const question = this.state.studyQuestions[this.state.currentQuestionIndex];
     const isCorrect = this.validateAnswer(userAnswer, question.answers);
 
-    // Record answer
-    SheetsAPI.recordAnswer(question.id, isCorrect);
+    // Record answer with version
+    SheetsAPI.recordAnswer(question.id, isCorrect, this.state.testVersion);
 
     // Update session score
     if (isCorrect) {
@@ -791,8 +884,18 @@ const App = {
    * Start exam mode
    */
   startExamMode() {
-    // Ensure at least 2 questions from each category
-    const categories = ['American Government', 'American History', 'Integrated Civics'];
+    const allQuestions = this.getQuestions();
+    const is2025 = this.state.testVersion === '2025';
+
+    // 2025 test: 20 questions, need 12 correct
+    // 2008 test: 10 questions, need 6 correct
+    const examSize = is2025 ? 20 : 10;
+
+    // Categories differ between versions
+    const categories = is2025
+      ? ['American Government', 'American History', 'Symbols and Holidays']
+      : ['American Government', 'American History', 'Integrated Civics'];
+
     const selectedQuestions = [];
     const usedIds = new Set();
 
@@ -806,18 +909,20 @@ const App = {
       return result;
     };
 
-    // Select 2 random questions from each category
+    // Select questions from each category proportionally
+    const questionsPerCategory = Math.floor(examSize / categories.length);
     for (const category of categories) {
-      const categoryQuestions = shuffle(QUESTIONS.filter(q => q.category === category));
-      for (let i = 0; i < 2 && i < categoryQuestions.length; i++) {
+      const categoryQuestions = shuffle(allQuestions.filter(q => q.category === category));
+      for (let i = 0; i < questionsPerCategory && i < categoryQuestions.length; i++) {
         selectedQuestions.push(categoryQuestions[i]);
         usedIds.add(categoryQuestions[i].id);
       }
     }
 
-    // Fill remaining slots (4 more) with random questions from any category
-    const remaining = shuffle(QUESTIONS.filter(q => !usedIds.has(q.id)));
-    for (let i = 0; i < 4 && i < remaining.length; i++) {
+    // Fill remaining slots with random questions from any category
+    const remainingSlots = examSize - selectedQuestions.length;
+    const remaining = shuffle(allQuestions.filter(q => !usedIds.has(q.id)));
+    for (let i = 0; i < remainingSlots && i < remaining.length; i++) {
       selectedQuestions.push(remaining[i]);
     }
 
@@ -837,7 +942,8 @@ const App = {
    */
   renderCurrentExamQuestion() {
     const question = this.state.examQuestions[this.state.examCurrentIndex];
-    UI.renderExamQuestion(question, this.state.examCurrentIndex + 1, this.state.answerMode);
+    const totalQuestions = this.state.testVersion === '2025' ? 20 : 10;
+    UI.renderExamQuestion(question, this.state.examCurrentIndex + 1, this.state.answerMode, totalQuestions);
   },
 
   /**
@@ -911,8 +1017,9 @@ const App = {
    */
   nextExamQuestion() {
     this.state.examCurrentIndex++;
+    const examSize = this.state.testVersion === '2025' ? 20 : 10;
 
-    if (this.state.examCurrentIndex >= 10) {
+    if (this.state.examCurrentIndex >= examSize) {
       // Exam complete
       this.completeExam();
     } else {
@@ -924,28 +1031,34 @@ const App = {
    * Complete the exam
    */
   completeExam() {
-    const passed = this.state.examScore >= 6;
+    const is2025 = this.state.testVersion === '2025';
+    const passingScore = is2025 ? 12 : 6;
+    const totalQuestions = is2025 ? 20 : 10;
+
+    const passed = this.state.examScore >= passingScore;
     const questionsAsked = this.state.examQuestions.map(q => q.id);
     const questionsMissed = this.state.examAnswers
       .filter(a => !a.correct)
       .map(a => a.questionId);
 
-    // Record exam
+    // Record exam with version info
     SheetsAPI.recordExam(
       this.state.examScore,
       passed,
       questionsAsked,
-      questionsMissed
+      questionsMissed,
+      this.state.testVersion
     );
 
     // Get missed question details
+    const allQuestions = this.getQuestions();
     const missedQuestions = questionsMissed.map(id =>
-      QUESTIONS.find(q => q.id === id)
+      allQuestions.find(q => q.id === id)
     );
 
     // Show results
     this.state.examInProgress = false;
-    UI.renderExamResults(this.state.examScore, passed, missedQuestions);
+    UI.renderExamResults(this.state.examScore, passed, missedQuestions, totalQuestions, passingScore);
     this.showScreen('exam-results');
 
     // Update home stats
@@ -983,7 +1096,8 @@ const App = {
       return;
     }
 
-    this.state.studyQuestions = QUESTIONS.filter(q => missedIds.includes(q.id));
+    const allQuestions = this.getQuestions();
+    this.state.studyQuestions = allQuestions.filter(q => missedIds.includes(q.id));
     this.state.currentQuestionIndex = 0;
     this.state.studyOneAtATime = true;
     this.state.studySessionCorrect = 0;
@@ -1033,7 +1147,8 @@ const App = {
    */
   renderCurrentWeakQuestion() {
     const weakInfo = this.state.weakQuestions[this.state.weakCurrentIndex];
-    const question = QUESTIONS.find(q => q.id === weakInfo.questionId);
+    const allQuestions = this.getQuestions();
+    const question = allQuestions.find(q => q.id === weakInfo.questionId);
 
     if (!question) {
       this.nextWeakQuestion();
@@ -1048,10 +1163,11 @@ const App = {
    */
   weakSelectChoice(button, choiceIndex, isCorrect) {
     const weakInfo = this.state.weakQuestions[this.state.weakCurrentIndex];
-    const question = QUESTIONS.find(q => q.id === weakInfo.questionId);
+    const allQuestions = this.getQuestions();
+    const question = allQuestions.find(q => q.id === weakInfo.questionId);
 
-    // Record answer
-    SheetsAPI.recordAnswer(question.id, isCorrect);
+    // Record answer with version
+    SheetsAPI.recordAnswer(question.id, isCorrect, this.state.testVersion);
 
     // Update UI
     UI.updateChoiceStates(button, isCorrect, 'weak-choices-container');
@@ -1075,11 +1191,12 @@ const App = {
     if (!userAnswer) return;
 
     const weakInfo = this.state.weakQuestions[this.state.weakCurrentIndex];
-    const question = QUESTIONS.find(q => q.id === weakInfo.questionId);
+    const allQuestions = this.getQuestions();
+    const question = allQuestions.find(q => q.id === weakInfo.questionId);
     const isCorrect = this.validateAnswer(userAnswer, question.answers);
 
-    // Record answer
-    SheetsAPI.recordAnswer(question.id, isCorrect);
+    // Record answer with version
+    SheetsAPI.recordAnswer(question.id, isCorrect, this.state.testVersion);
 
     // Show feedback
     UI.showFeedback(isCorrect, question.answers, 'weak-feedback', 'weak-correct-answers');
@@ -1254,7 +1371,7 @@ App.selectChoice = function(button, choiceIndex, isCorrect) {
   } else {
     // Study mode
     const question = this.state.studyQuestions[this.state.currentQuestionIndex];
-    SheetsAPI.recordAnswer(question.id, isCorrect);
+    SheetsAPI.recordAnswer(question.id, isCorrect, this.state.testVersion);
     UI.updateChoiceStates(button, isCorrect, 'choices-container');
     UI.showFeedback(isCorrect, question.answers);
   }

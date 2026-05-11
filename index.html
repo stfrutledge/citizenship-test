@@ -9,6 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="js/questions.js"></script>
+  <script src="js/questions-2025.js"></script>
 </head>
 <body>
   <div id="app">
@@ -32,9 +34,22 @@
 
       <!-- Home Screen -->
       <section id="screen-home" class="screen active">
+        <div class="test-version-selector">
+          <button class="version-btn active" id="version-2008-btn" onclick="App.setTestVersion('2008')">
+            <span class="version-title">2008 Test</span>
+            <span class="version-subtitle">100 Questions</span>
+            <span class="version-info">For applications before Oct 20, 2025</span>
+          </button>
+          <button class="version-btn" id="version-2025-btn" onclick="App.setTestVersion('2025')">
+            <span class="version-title">2025 Test</span>
+            <span class="version-subtitle">128 Questions</span>
+            <span class="version-info">For applications on/after Oct 20, 2025</span>
+          </button>
+        </div>
+
         <div class="hero">
           <h2>Prepare for Your Naturalization Test</h2>
-          <p>Practice all 100 civics questions from the official USCIS test</p>
+          <p id="hero-description">Practice all 100 civics questions from the official USCIS test</p>
         </div>
 
         <div class="quick-stats">
@@ -54,12 +69,12 @@
             <div class="mode-card" onclick="App.startStudyMode()">
               <div class="mode-icon">📚</div>
               <h4>Study All Questions</h4>
-              <p>Browse and practice all 100 civics questions by category</p>
+              <p id="study-mode-desc">Browse and practice all 100 civics questions by category</p>
             </div>
             <div class="mode-card" onclick="App.startExamMode()">
               <div class="mode-icon">📝</div>
               <h4>Sample Exam</h4>
-              <p>Take a 10-question practice test (6/10 to pass)</p>
+              <p id="exam-mode-desc">Take a 10-question practice test (6/10 to pass)</p>
             </div>
             <div class="mode-card" onclick="App.startWeakAreasMode()">
               <div class="mode-icon">🎯</div>
@@ -166,7 +181,7 @@
           <button class="back-btn" onclick="App.confirmExitExam()">← Exit Exam</button>
           <h2>Sample Exam</h2>
           <div class="exam-progress">
-            <span>Question <span id="exam-current">1</span> of 10</span>
+            <span>Question <span id="exam-current">1</span> of <span id="exam-total">10</span></span>
             <div class="progress-bar">
               <div class="progress-fill" id="exam-progress-fill"></div>
             </div>
@@ -210,7 +225,7 @@
           <div class="score-display">
             <div class="score-circle">
               <span class="score-value" id="exam-score">8</span>
-              <span class="score-total">/10</span>
+              <span class="score-total" id="exam-score-total">/10</span>
             </div>
             <p class="score-label">Questions Correct</p>
           </div>
@@ -509,7 +524,6 @@
   </div>
 
   <!-- Scripts -->
-  <script src="js/questions.js"></script>
   <script src="js/sheets-api.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/writing-test.js"></script>

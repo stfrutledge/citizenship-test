@@ -89,11 +89,11 @@ const UI = {
   /**
    * Update home screen stats
    */
-  updateHomeStats(stats) {
+  updateHomeStats(stats, questionTotal = 100) {
     const totalPracticed = document.getElementById('home-total-practiced');
     const accuracy = document.getElementById('home-accuracy');
 
-    if (totalPracticed) totalPracticed.textContent = `${stats.questionsPracticedToday || 0}/100`;
+    if (totalPracticed) totalPracticed.textContent = `${stats.questionsPracticedToday || 0}/${questionTotal}`;
     if (accuracy) accuracy.textContent = `${(stats.accuracy || 0).toFixed(0)}%`;
   },
 
@@ -374,9 +374,10 @@ const UI = {
   /**
    * Render exam question
    */
-  renderExamQuestion(question, questionNum, mode = 'typed') {
+  renderExamQuestion(question, questionNum, mode = 'typed', totalQuestions = 10) {
     document.getElementById('exam-current').textContent = questionNum;
-    document.getElementById('exam-progress-fill').style.width = `${(questionNum / 10) * 100}%`;
+    document.getElementById('exam-total').textContent = totalQuestions;
+    document.getElementById('exam-progress-fill').style.width = `${(questionNum / totalQuestions) * 100}%`;
     document.getElementById('exam-q-text').textContent = question.question;
 
     // Clear feedback
@@ -432,9 +433,10 @@ const UI = {
   /**
    * Render exam results
    */
-  renderExamResults(score, passed, missedQuestions) {
+  renderExamResults(score, passed, missedQuestions, totalQuestions = 10, passingScore = 6) {
     const header = document.getElementById('results-header');
     const scoreEl = document.getElementById('exam-score');
+    const scoreTotalEl = document.getElementById('exam-score-total');
     const missedContainer = document.getElementById('missed-questions-container');
     const missedList = document.getElementById('missed-questions-list');
 
@@ -444,11 +446,15 @@ const UI = {
       header.querySelector('h2').textContent = passed ? 'Congratulations!' : 'Keep Practicing';
       header.querySelector('.result-subtitle').textContent = passed
         ? 'You passed the practice exam'
-        : 'You need 6/10 to pass';
+        : `You need ${passingScore}/${totalQuestions} to pass`;
     }
 
     if (scoreEl) {
       scoreEl.textContent = score;
+    }
+
+    if (scoreTotalEl) {
+      scoreTotalEl.textContent = `/${totalQuestions}`;
     }
 
     if (missedContainer && missedList) {

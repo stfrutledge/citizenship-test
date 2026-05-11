@@ -236,11 +236,12 @@ const SheetsAPI = {
   /**
    * Record an answer for a question
    */
-  async recordAnswer(questionId, correct) {
+  async recordAnswer(questionId, correct, version = '2008') {
     const result = await this.makePostRequest({
       action: 'recordAnswer',
       questionId: questionId,
-      correct: correct
+      correct: correct,
+      version: version
     });
 
     // Update local cache
@@ -257,13 +258,14 @@ const SheetsAPI = {
   /**
    * Record an exam result
    */
-  async recordExam(score, passed, questionsAsked, questionsMissed) {
+  async recordExam(score, passed, questionsAsked, questionsMissed, version = '2008') {
     const result = await this.makePostRequest({
       action: 'recordExam',
       score: score,
       passed: passed,
       questionsAsked: questionsAsked,
-      questionsMissed: questionsMissed
+      questionsMissed: questionsMissed,
+      version: version
     });
 
     // Update local cache

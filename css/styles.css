@@ -708,6 +708,63 @@ body {
   color: var(--error);
 }
 
+/* Test Version Selector */
+.test-version-selector {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  margin-bottom: var(--spacing-xl);
+  flex-wrap: wrap;
+}
+
+.version-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  min-width: 200px;
+}
+
+.version-btn:hover {
+  border-color: var(--primary-blue);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.version-btn.active {
+  border-color: var(--primary-blue);
+  background: rgba(26, 54, 93, 0.1);
+}
+
+.version-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.version-subtitle {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--primary-blue);
+  margin-bottom: var(--spacing-xs);
+}
+
+.version-info {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+[data-theme="dark"] .version-btn.active {
+  background: rgba(99, 179, 237, 0.2);
+}
+
 /* Exam Results */
 .results-container {
   max-width: 500px;
