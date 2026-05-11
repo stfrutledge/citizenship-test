@@ -750,6 +750,8 @@ const App = {
       'legislative': ['legislative', 'congress', 'legislature'],
       // Actions/concepts
       'wrote': ['wrote', 'write', 'writing', 'written', 'author', 'authored'],
+      'declare': ['declare', 'declares', 'declared', 'declaring', 'declaration'],
+      'make': ['make', 'makes', 'made', 'making'],
       'represent': ['represent', 'represents', 'representing', 'representation', 'stands for', 'symbolize', 'symbolizes'],
       'protect': ['protect', 'protects', 'protecting', 'protection', 'defend', 'defends'],
       'resolve': ['resolve', 'resolves', 'resolving', 'resolution', 'settle', 'settles', 'decide', 'decides'],
